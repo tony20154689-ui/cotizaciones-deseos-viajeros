@@ -1947,7 +1947,47 @@ preview.innerHTML=`
 ${adjuntos.length?`<div class="cot-page cot-adjuntos-page" style="min-height:auto;"><div class="internal-badge">USO INTERNO - NO ENVIAR AL CLIENTE</div><div class="cot-adjuntos-body"><h3>Adjuntos de apoyo</h3><div class="adjuntos-preview-grid">${adjuntos.map(a=>`<div class="adjunto-preview-card"><img src="${a.dataUrl}" alt="${esc(a.descripcion)}" onclick="openImgLightbox('${a.id}','${esc(a.categoria)}','${esc(a.descripcion).replace(/'/g,"\\'")}')"><div class="adjunto-preview-info"><div class="adjunto-preview-cat">${esc(a.categoria)}</div><div class="adjunto-preview-label">${esc(a.descripcion)}</div></div></div>`).join('')}</div></div></div>`:''}`;}
 
 // ===== HISTORIAL =====
-function guardarCotizacion(){const data=collectFormData();if(!data.destino){alert('Ingrese un destino.');return;}const hist=getHistorial();const clienteId=autoCreateCliente(data);const entry={id:editingId||Date.now().toString(),fecha:new Date().toISOString(),data,aceptada:false,clienteId};if(editingId){const idx=hist.findIndex(h=>h.id===editingId);if(idx>=0){entry.aceptada=hist[idx].aceptada||false;hist[idx]=entry;}else hist.unshift(entry);editingId=null;}else{hist.unshift(entry);}saveHistorial(hist);updateBadges();alert('Cotizaci\u00f3n guardada.');}
+function guardarCotizacion(){
+    const data=collectFormData();
+    if(!data.destino){alert('Ingrese un destino.');return;}
+    const hist=getHistorial();
+    const clienteId=autoCreateCliente(data);
+    const savingId=editingId||Date.now().toString();
+    const entry={id:savingId,fecha:new Date().toISOString(),data,aceptada:false,clienteId};
+    if(editingId){
+        const idx=hist.findIndex(h=>h.id===editingId);
+        if(idx>=0){
+            entry.aceptada=hist[idx].aceptada||false;
+            entry.fecha=hist[idx].fecha||entry.fecha; // preservar fecha de creación original
+            hist[idx]=entry;
+        }else{
+            hist.unshift(entry);
+        }
+    }else{
+        hist.unshift(entry);
+    }
+    saveHistorial(hist);
+    // Si esta cotización tiene una venta vinculada, actualizar sus datos denormalizados
+    const ventas=getVentas();
+    const ventaIdx=ventas.findIndex(v=>v.cotizacionId===savingId);
+    if(ventaIdx>=0){
+        const v=ventas[ventaIdx];
+        v.destino=data.destino;
+        v.clienteNombre=data.tipoCliente==='empresa'?(data.empresaNombre||data.empresaContacto||''):(data.clienteNombre||'');
+        v.fechaInicio=data.fechaInicio;
+        v.fechaFin=data.fechaFin;
+        v.encargado=data.encargado;
+        v.clienteId=clienteId;
+        v.fechaActualizacion=new Date().toISOString();
+        saveVentas(ventas);
+    }
+    editingId=null;
+    updateBadges();
+    // Re-render historial y ventas si están visibles
+    if(document.getElementById('viewHistorial').classList.contains('active'))renderHistorial();
+    if(document.getElementById('viewVentas').classList.contains('active'))renderVentas();
+    alert('Cotizaci\u00f3n guardada.'+(ventaIdx>=0?' La venta vinculada tambi\u00e9n fue actualizada.':''));
+}
 
 function cargarCotizacion(id){const hist=getHistorial();const entry=hist.find(h=>h.id===id);if(!entry)return;const d=entry.data;editingId=id;
 switchFormat(d.formato||'america');switchTipoCliente(d.tipoCliente||'persona');
