@@ -516,7 +516,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
 <!-- VIEW: HISTORIAL -->
 <div class="app-view view-list" id="viewHistorial">
     <div class="list-header"><h2>Historial de Cotizaciones</h2><button class="btn btn-danger btn-sm" onclick="limpiarHistorial()">Limpiar</button></div>
-    <div class="list-search"><input type="text" id="historialSearch" placeholder="Buscar por destino, cliente, encargado..." oninput="renderHistorial()"><select id="historialFilterAceptada" onchange="renderHistorial()"><option value="">Todas</option><option value="aceptada">Aceptadas</option><option value="pendiente">Pendientes</option></select></div>
+    <div class="list-search"><input type="text" id="historialSearch" placeholder="Buscar por destino, cliente, encargado..." oninput="renderHistorial()"><select id="historialFilterEncargado" onchange="renderHistorial()"><option value="">Todos los encargados</option></select><select id="historialFilterAceptada" onchange="renderHistorial()"><option value="">Todas</option><option value="aceptada">Aceptadas</option><option value="pendiente">Pendientes</option></select></div>
     <div class="card-grid" id="historialGrid"></div>
 </div>
 
@@ -1495,9 +1495,23 @@ nav('editor');updatePreview();}
 
 function toggleAceptada(id){const hist=getHistorial();const entry=hist.find(h=>h.id===id);if(!entry)return;if(entry.aceptada){if(!confirm('\u00bfDesmarcar esta cotizaci\u00f3n como aceptada? Se eliminar\u00e1 la venta asociada.'))return;entry.aceptada=false;const ventas=getVentas().filter(v=>v.cotizacionId!==id);saveVentas(ventas);}else{entry.aceptada=true;crearVenta(entry);}saveHistorial(hist);renderHistorial();updateBadges();}
 
-function renderHistorial(){const hist=getHistorial();const grid=document.getElementById('historialGrid');const search=document.getElementById('historialSearch').value.toLowerCase();const filterA=document.getElementById('historialFilterAceptada').value;
-const filtered=hist.filter(h=>{const d=h.data;const text=[d.destino,d.clienteNombre,d.empresaNombre,d.empresaContacto,d.formato,d.encargado].join(' ').toLowerCase();const matchSearch=!search||text.includes(search);const matchFilter=!filterA||(filterA==='aceptada'&&h.aceptada)||(filterA==='pendiente'&&!h.aceptada);return matchSearch&&matchFilter;});
-if(!filtered.length){grid.innerHTML=`<div class="grid-empty"><h3>${search||filterA?'Sin resultados':'Sin cotizaciones'}</h3><p>Cree una cotizaci\u00f3n y gu\u00e1rdela.</p></div>`;return;}
+function renderHistorial(){
+const hist=getHistorial();
+const grid=document.getElementById('historialGrid');
+const search=document.getElementById('historialSearch').value.toLowerCase();
+const filterA=document.getElementById('historialFilterAceptada').value;
+const encSel=document.getElementById('historialFilterEncargado');
+const filterE=encSel.value;
+// Poblar dropdown con encargados únicos de las cotizaciones + los del config
+const encSet=new Set();
+cfgGet().encargados.forEach(e=>{if(e)encSet.add(e);});
+hist.forEach(h=>{if(h.data&&h.data.encargado)encSet.add(h.data.encargado);});
+const encList=Array.from(encSet).sort();
+const curE=encSel.value;
+encSel.innerHTML='<option value="">Todos los encargados</option>'+encList.map(e=>`<option value="${esc(e)}">${esc(e)}</option>`).join('');
+if(curE&&encList.includes(curE))encSel.value=curE;
+const filtered=hist.filter(h=>{const d=h.data;const text=[d.destino,d.clienteNombre,d.empresaNombre,d.empresaContacto,d.formato,d.encargado].join(' ').toLowerCase();const matchSearch=!search||text.includes(search);const matchFilter=!filterA||(filterA==='aceptada'&&h.aceptada)||(filterA==='pendiente'&&!h.aceptada);const matchEnc=!filterE||(d.encargado===filterE);return matchSearch&&matchFilter&&matchEnc;});
+if(!filtered.length){grid.innerHTML=`<div class="grid-empty"><h3>${search||filterA||filterE?'Sin resultados':'Sin cotizaciones'}</h3><p>Cree una cotizaci\u00f3n y gu\u00e1rdela.</p></div>`;return;}
 grid.innerHTML=filtered.map(h=>{const d=h.data;const cl=d.tipoCliente==='empresa'?(d.empresaNombre||'Sin empresa'):(d.clienteNombre||'Sin nombre');const tl=d.tipoCliente==='empresa'?'Empresa':'Persona';const tc=d.tipoCliente==='empresa'?'empresa':'persona';const fe=new Date(h.fecha).toLocaleDateString('es-CR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});const fl=(d.formato||'america')==='america'?'Am\u00e9rica':(d.formato==='europa'?'Europa/Asia':'Crucero');
 return`<div class="hist-card${h.aceptada?' aceptada':''}"><div style="display:flex;justify-content:space-between;align-items:start;"><div class="hist-destino">${esc(d.destino||'Sin destino')}</div><div style="display:flex;gap:4px;align-items:center;"><span class="hist-formato">${fl}</span>${h.aceptada?'<span class="badge-aceptada">ACEPTADA</span>':''}</div></div><div class="hist-cliente"><span class="hist-tipo ${tc}">${tl}</span> ${esc(cl)}</div>${d.encargado?`<div class="hist-fecha" style="color:var(--primary-dark);font-weight:600;">Encargado: ${esc(d.encargado)}</div>`:''}${d.fechaInicio?`<div class="hist-fecha">Viaje: ${formatDateRange(d.fechaInicio,d.fechaFin)}</div>`:''}<div class="hist-fecha">Creada: ${fe}</div><div class="hist-card-actions"><button class="btn btn-sm btn-primary" onclick="cargarCotizacion('${h.id}')">Editar</button><button class="btn btn-sm btn-warning" onclick="duplicarCotizacion('${h.id}')">Duplicar</button><button class="btn btn-sm ${h.aceptada?'btn-ghost':'btn-success'}" onclick="toggleAceptada('${h.id}')">${h.aceptada?'Desmarcar':'Aceptada'}</button><button class="btn btn-sm btn-danger" onclick="eliminarCotizacion('${h.id}')">Eliminar</button></div></div>`;}).join('');}
 
