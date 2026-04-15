@@ -432,7 +432,10 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
 .kpi-card.accent{border-left-color:var(--accent)}
 .kpi-card.primary-vivid{border-left-color:var(--primary-vivid)}
 .kpi-label{font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);font-weight:700;margin-bottom:6px}
-.kpi-value{font-family:'Playfair Display',serif;font-size:2.3rem;color:var(--primary-dark);font-weight:700;line-height:1}
+.kpi-value{font-family:'Playfair Display',serif;font-size:2.3rem;color:var(--primary-dark);font-weight:700;line-height:1;letter-spacing:-0.5px}
+.kpi-value .kpi-unit{font-size:1.1rem;font-weight:400;opacity:0.6;margin-left:2px;vertical-align:0.6em}
+.kpi-value .kpi-cur{font-size:1.3rem;font-weight:600;opacity:0.7;margin-right:2px;vertical-align:0.3em}
+.kpi-value .kpi-decimals{font-size:1rem;font-weight:400;opacity:0.5}
 .kpi-card.green .kpi-value{color:var(--success)}
 .kpi-card.accent .kpi-value{color:#d4830f}
 .kpi-sub{font-size:0.78rem;color:var(--text-light);margin-top:6px;display:flex;align-items:center;gap:5px}
@@ -867,13 +870,15 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
         <button class="btn btn-sm btn-ghost" onclick="togglePagoForm()">Cancelar</button>
     </div>
     <table class="pagos-table" id="pagosTable"><thead><tr><th>Fecha</th><th>Monto</th><th>M&eacute;todo</th><th>Referencia</th><th>Nota</th><th></th></tr></thead><tbody id="pagosTableBody"></tbody></table>
-</div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modalCobranza')">Cerrar</button><button class="btn btn-outline" style="color:var(--primary-dark);border-color:var(--primary);" onclick="generarEstadoCuenta()">&#128196; Estado de cuenta</button><button class="btn btn-accent" onclick="generarRecibo()">&#129534; Recibo de pago</button></div></div></div>
+</div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modalCobranza')">Cerrar</button><button class="btn btn-accent" onclick="generarEstadoCuenta()">&#128196; Generar Estado de Cuenta</button></div></div></div>
 
 <!-- VIEW: Documento imprimible (recibo / estado de cuenta) -->
 <div class="app-view view-list" id="viewDocumento" style="background:#e0e5ec;">
-    <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <button class="btn btn-outline" style="color:var(--primary-dark);border-color:var(--primary);" onclick="nav('ventas')">&larr; Volver a Ventas</button>
-        <button class="btn btn-accent" onclick="window.print()">&#128424; Imprimir / PDF</button>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
+        <button class="btn btn-outline" style="color:var(--primary-dark);border-color:var(--primary);" onclick="nav('ventas')">&larr; Volver</button>
+        <button class="btn btn-accent" onclick="window.print()">&#128424; Guardar como PDF / Imprimir</button>
+        <div style="flex:1;"></div>
+        <small style="color:var(--text-light);font-size:0.72rem;background:#fff3cd;padding:5px 10px;border-radius:6px;border:1px solid #ffd966;">&#128161; Tip: al imprimir, elegir <strong>"Guardar como PDF"</strong> como destino</small>
     </div>
     <div id="documentoContent"></div>
 </div>
@@ -1193,7 +1198,7 @@ function renderDashboard(){
         <div class="kpi-card green">
             <div class="kpi-icon">&#9989;</div>
             <div class="kpi-label">Tasa de conversi\u00f3n</div>
-            <div class="kpi-value">${m.conversion}%</div>
+            <div class="kpi-value">${m.conversion}<span class="kpi-unit">%</span></div>
             <div class="kpi-sub">${m.aceptadas} aceptadas de ${m.totalCot}</div>
         </div>
         <div class="kpi-card accent">
@@ -1205,7 +1210,7 @@ function renderDashboard(){
         <div class="kpi-card primary-vivid">
             <div class="kpi-icon">&#128178;</div>
             <div class="kpi-label">Ingreso estimado</div>
-            <div class="kpi-value">$${m.ingresoEstimado.toLocaleString('es-CR',{maximumFractionDigits:0})}</div>
+            <div class="kpi-value"><span class="kpi-cur">$</span>${m.ingresoEstimado.toLocaleString('en-US',{maximumFractionDigits:0})}</div>
             <div class="kpi-sub">Ventas no canceladas &bull; estimaci\u00f3n</div>
         </div>
         <div class="kpi-card">
@@ -2096,7 +2101,7 @@ function renderPagosTable(){
     }
     const m=v.cobranza.moneda||'USD';
     const sorted=[...v.cobranza.pagos].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
-    tbody.innerHTML=sorted.map(p=>`<tr><td>${esc(p.fecha||'')}</td><td><strong>${fmtMoney(p.monto,m)}</strong></td><td>${esc(p.metodo||'')}</td><td>${esc(p.referencia||'')}</td><td>${esc(p.nota||'')}</td><td><button class="btn-icon remove" onclick="removePago('${p.id}')" title="Eliminar">&times;</button></td></tr>`).join('');
+    tbody.innerHTML=sorted.map(p=>`<tr><td>${esc(p.fecha||'')}</td><td><strong>${fmtMoney(p.monto,m)}</strong></td><td>${esc(p.metodo||'')}</td><td>${esc(p.referencia||'')}</td><td>${esc(p.nota||'')}</td><td style="white-space:nowrap;"><button class="btn btn-sm btn-accent" style="padding:3px 8px;font-size:0.7rem;margin-right:3px;" onclick="generarReciboPago('${p.id}')" title="Generar recibo de este pago">&#129534; Recibo</button><button class="btn-icon remove" onclick="removePago('${p.id}')" title="Eliminar">&times;</button></td></tr>`).join('');
 }
 
 function togglePagoForm(){
@@ -2147,48 +2152,67 @@ function removePago(pagoId){
 
 function generarEstadoCuenta(){
     const ventaId=document.getElementById('cobVentaId').value;
+    if(!ventaId){alert('No hay venta seleccionada.');return;}
+    const ventas=getVentas();
+    const v=ventas.find(x=>x.id===ventaId);
+    if(!v){alert('Venta no encontrada.');return;}
+    // Asegurar que v.cobranza existe (aunque sea vacía)
+    if(!v.cobranza)v.cobranza={montoTotal:0,moneda:'USD',pagos:[]};
+    if(!v.cobranza.pagos)v.cobranza.pagos=[];
+    saveVentas(ventas);
     closeModal('modalCobranza');
-    renderDocumento('estado',ventaId);
     nav('documento');
+    setTimeout(()=>renderDocumento('estado',ventaId),50);
 }
 
+// Genera recibo a partir del botón en cada fila de pago
+function generarReciboPago(pagoId){
+    const ventaId=document.getElementById('cobVentaId').value;
+    if(!ventaId){alert('No hay venta seleccionada.');return;}
+    const ventas=getVentas();
+    const v=ventas.find(x=>x.id===ventaId);
+    if(!v||!v.cobranza||!v.cobranza.pagos){alert('No hay pagos registrados.');return;}
+    const pago=v.cobranza.pagos.find(p=>p.id===pagoId);
+    if(!pago){alert('Pago no encontrado.');return;}
+    closeModal('modalCobranza');
+    nav('documento');
+    setTimeout(()=>renderDocumento('recibo',ventaId,pagoId),50);
+}
+
+// Genera recibo del footer - usa el primer pago si hay uno solo, avisa si no
 function generarRecibo(){
     const ventaId=document.getElementById('cobVentaId').value;
     const ventas=getVentas();
     const v=ventas.find(x=>x.id===ventaId);
     if(!v||!v.cobranza||!v.cobranza.pagos||!v.cobranza.pagos.length){
-        alert('No hay pagos registrados. Registre un pago antes de generar el recibo.');
+        alert('No hay pagos registrados. Registre un pago antes de generar el recibo.\n\nTip: tambi\u00e9n puede hacer click en el bot\u00f3n \u{1F9FE} Recibo de cada pago individual en la tabla.');
         return;
     }
-    // Si hay varios pagos, preguntar cuál
-    let pagoId;
-    if(v.cobranza.pagos.length===1){pagoId=v.cobranza.pagos[0].id;}
-    else{
-        const opciones=v.cobranza.pagos.map((p,i)=>`${i+1}. ${p.fecha} - ${fmtMoney(p.monto,v.cobranza.moneda)} (${p.metodo})`).join('\n');
-        const sel=prompt('\u00bfDe qu\u00e9 pago desea generar el recibo?\n\n'+opciones+'\n\nIngrese el n\u00famero:');
-        if(!sel)return;
-        const idx=parseInt(sel,10)-1;
-        if(isNaN(idx)||idx<0||idx>=v.cobranza.pagos.length){alert('Selecci\u00f3n inv\u00e1lida.');return;}
-        pagoId=v.cobranza.pagos[idx].id;
+    if(v.cobranza.pagos.length===1){
+        generarReciboPago(v.cobranza.pagos[0].id);
+    }else{
+        alert('Hay varios pagos registrados. Haga click en el bot\u00f3n \u{1F9FE} Recibo del pago espec\u00edfico en la tabla para generar su recibo.');
     }
-    closeModal('modalCobranza');
-    renderDocumento('recibo',ventaId,pagoId);
-    nav('documento');
 }
 
 function renderDocumento(tipo,ventaId,pagoId){
+    const container=document.getElementById('documentoContent');
+    if(!container){console.error('documentoContent not found');return;}
     const ventas=getVentas();
     const v=ventas.find(x=>x.id===ventaId);
-    if(!v)return;
+    if(!v){container.innerHTML='<div style="padding:30px;text-align:center;color:var(--text-light);">Venta no encontrada.</div>';return;}
+    // Asegurar cobranza defensivamente
+    if(!v.cobranza)v.cobranza={montoTotal:0,moneda:'USD',pagos:[]};
+    if(!v.cobranza.pagos)v.cobranza.pagos=[];
     const cot=getHistorial().find(h=>h.id===v.cotizacionId);
     const clientes=getClientes();
     const cli=v.clienteId?clientes.find(c=>c.id===v.clienteId):null;
     const cfg=cfgGet();
-    const ag=cfg.agencyInfo;
+    const ag=cfg.agencyInfo||{};
     const c=calcCobranzaStatus(v);
     const now=new Date();
     const fechaDoc=now.toLocaleDateString('es-CR',{day:'2-digit',month:'long',year:'numeric'});
-    const docNum=(tipo==='recibo'?'REC-':'EDC-')+new Date(v.fechaCreacion||Date.now()).getFullYear()+'-'+String(v.id).slice(-6);
+    const docNum=(tipo==='recibo'?'REC-':'EDC-')+new Date(v.fechaCreacion||Date.now()).getFullYear()+'-'+String(v.id||'').slice(-6);
     // Cliente display
     const clienteNombre=v.clienteNombre||(cli&&cli.nombreCompleto)||'Sin nombre';
     const clienteDoc=cli?(cli.tipoDocumento+' '+cli.numeroDocumento):'';
@@ -2197,7 +2221,7 @@ function renderDocumento(tipo,ventaId,pagoId){
     let bodyHtml='';
     if(tipo==='recibo'){
         const pago=(v.cobranza.pagos||[]).find(p=>p.id===pagoId);
-        if(!pago)return;
+        if(!pago){container.innerHTML='<div style="padding:30px;text-align:center;color:var(--danger);">Pago no encontrado.</div>';return;}
         const saldoDespues=Math.max(0,c.montoTotal-c.pagado);
         bodyHtml=`
         <div class="recibo-header">
@@ -2268,7 +2292,7 @@ function renderDocumento(tipo,ventaId,pagoId){
             <p style="margin-top:10px;font-size:0.72rem;">${esc(ag.slogan||'Aqu\u00ed inicia tu viaje...')}</p>
         </div>`;
     }
-    document.getElementById('documentoContent').innerHTML=`<div class="recibo-page">${bodyHtml}</div>`;
+    container.innerHTML=`<div class="recibo-page">${bodyHtml}</div>`;
 }
 
 // ===== CLIENTES =====
