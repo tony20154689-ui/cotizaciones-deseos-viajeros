@@ -216,6 +216,29 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
 
 /* ===== LIST VIEW (Ventas & Clientes) ===== */
 .list-view{display:flex;flex-direction:column;gap:8px}
+/* Tabla con headers para Ventas/Clientes */
+.list-table{width:100%;border-collapse:separate;border-spacing:0 6px;background:transparent}
+.list-table thead th{background:var(--primary-dark);color:white;padding:10px 14px;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;text-align:left;white-space:nowrap}
+.list-table thead th:first-child{border-top-left-radius:8px;border-bottom-left-radius:8px}
+.list-table thead th:last-child{border-top-right-radius:8px;border-bottom-right-radius:8px;text-align:right}
+.list-table tbody tr{background:white;box-shadow:0 1px 4px rgba(0,0,0,0.06);transition:all 0.15s}
+.list-table tbody tr:hover{box-shadow:0 3px 12px rgba(0,0,0,0.1);transform:translateX(2px)}
+.list-table tbody td{padding:12px 14px;vertical-align:middle;border-top:1px solid var(--border);border-bottom:1px solid var(--border);font-size:0.82rem;color:var(--text)}
+.list-table tbody td:first-child{border-left:4px solid var(--primary);border-top-left-radius:8px;border-bottom-left-radius:8px}
+.list-table tbody td:last-child{border-right:1px solid var(--border);border-top-right-radius:8px;border-bottom-right-radius:8px;white-space:nowrap;text-align:right}
+.list-table .lt-destino,.list-table .lt-nombre{font-family:'Playfair Display',serif;font-size:0.95rem;color:var(--primary-dark);font-weight:700}
+.list-table .lt-secondary{color:var(--text-light);font-size:0.75rem;margin-top:2px}
+.list-table .lt-badge{display:inline-block;font-size:0.65rem;padding:2px 8px;border-radius:10px;font-weight:700}
+.list-table .lt-actions{display:inline-flex;gap:4px;white-space:nowrap;flex-wrap:nowrap}
+.list-table .lt-actions .btn,.list-table .lt-actions .btn-checklist{white-space:nowrap}
+.list-table .lt-progress-cell{min-width:110px}
+.list-table .lt-progress-cell .venta-progress{margin:2px 0}
+.list-table .lt-progress-cell .lr-progress-text{font-size:0.65rem;color:var(--text-light);text-align:left;margin-top:2px}
+/* Estado de borde por tipo */
+.list-table tbody tr.estado-pendiente td:first-child{border-left-color:var(--accent)}
+.list-table tbody tr.estado-en_proceso td:first-child{border-left-color:var(--primary)}
+.list-table tbody tr.estado-completada td:first-child{border-left-color:var(--success)}
+.list-table tbody tr.estado-cancelada td:first-child{border-left-color:var(--danger)}
 .list-row{background:white;border-radius:8px;padding:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;align-items:center;gap:16px;border-left:4px solid var(--primary);transition:all 0.15s}
 .list-row:hover{box-shadow:0 3px 12px rgba(0,0,0,0.1);transform:translateX(2px)}
 .list-row .lr-main{flex:1;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
@@ -394,11 +417,19 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
 
 /* Recibo/Estado de cuenta imprimible (reusa cot-page) */
 .recibo-page{width:816px;min-height:500px;background:white;box-shadow:0 4px 20px rgba(0,0,0,0.15);margin:20px auto;padding:0;position:relative;overflow:hidden}
-.recibo-header{background:linear-gradient(135deg,#429D9D 0%,#027584 100%);color:white;padding:22px 35px;display:flex;justify-content:space-between;align-items:center}
+.recibo-header{background:linear-gradient(135deg,#429D9D 0%,#027584 100%);color:white;padding:22px 35px;display:flex;justify-content:space-between;align-items:center;position:relative;overflow:hidden;min-height:150px}
+.recibo-header.has-image{background:none!important;padding:0;min-height:170px}
+.recibo-header.has-image::before{display:none!important}
+.recibo-header .header-bg-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:fill;z-index:0}
+.recibo-header.has-image>*{position:relative;z-index:1}
 .recibo-header .ag-info h2{font-family:'Playfair Display',serif;font-size:1.6rem}
 .recibo-header .ag-info p{font-size:0.78rem;opacity:0.85;line-height:1.4;margin-top:4px}
 .recibo-header .doc-type{font-family:'Playfair Display',serif;text-align:right;font-size:1rem;font-weight:700;text-transform:uppercase;letter-spacing:1px}
 .recibo-header .doc-type .doc-num{font-size:0.75rem;font-weight:400;opacity:0.9;margin-top:3px;letter-spacing:0.5px;text-transform:none}
+/* Barra con tipo de documento + número (va debajo del header) */
+.recibo-doc-bar{background:linear-gradient(135deg,var(--primary-dark),var(--primary));color:white;padding:10px 35px;display:flex;justify-content:space-between;align-items:center;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.recibo-doc-bar .doc-bar-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:2px}
+.recibo-doc-bar .doc-bar-num{font-size:0.78rem;opacity:0.85;letter-spacing:0.5px}
 .recibo-body{padding:25px 35px}
 .recibo-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;padding-bottom:18px;border-bottom:2px solid var(--primary)}
 .recibo-meta .meta-block{font-size:0.85rem}
@@ -518,6 +549,9 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
     .list-header h2{font-size:1.15rem}
     .list-search{flex-direction:column;gap:6px}
     .list-search input,.list-search select{width:100%}
+    .list-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
+    .list-table thead th{padding:8px 10px;font-size:0.65rem}
+    .list-table tbody td{padding:10px;font-size:0.78rem}
     .list-row{flex-direction:column;align-items:flex-start;padding:12px;gap:10px}
     .list-row .lr-main{flex-direction:column;align-items:flex-start;width:100%;gap:4px}
     .list-row .lr-title{min-width:0;font-size:1rem}
@@ -580,23 +614,34 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
     *{print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
     html,body{margin:0!important;padding:0!important;overflow:visible!important;background:white!important;width:100%!important;height:auto!important}
     .app-sidebar,.form-panel,.form-panel-splitter,.app-header,.cot-adjuntos-page,.modal-overlay,.img-lightbox,#viewDashboard,#viewConfiguracion,#viewHistorial,#viewEncabezados,#viewVentas,#viewClientes{display:none!important}
-    /* Cuando imprimo desde el documento (recibo/estado de cuenta) solo muestro la página */
-    #viewDocumento .btn,#viewDocumento button{display:none!important}
-    #viewDocumento{padding:0!important;background:white!important}
-    .recibo-page{box-shadow:none!important;margin:0 auto!important;width:100%!important;page-break-after:avoid}
-    .recibo-header{print-color-adjust:exact;-webkit-print-color-adjust:exact}
-    .recibo-table thead th{print-color-adjust:exact;-webkit-print-color-adjust:exact}
-    .recibo-stamp{print-color-adjust:exact;-webkit-print-color-adjust:exact}
     .app-layout,.app-main,.main-views{display:block!important;height:auto!important;overflow:visible!important;width:100%!important}
-    .view-editor{display:block!important;height:auto!important;overflow:visible!important}
-    .preview-panel{background:white!important;padding:0!important;margin:0!important;overflow:visible!important;display:block!important;width:100%!important}
-    .cot-page{box-shadow:none!important;width:100%!important;max-width:100%!important;min-height:0!important;margin:0!important;padding:0!important;page-break-after:always;page-break-inside:avoid}
-    .cot-page:last-child{page-break-after:auto}
-    .cot-header{height:auto!important;min-height:140px}
-    .cot-header .header-bg-img{position:relative!important;width:100%!important;height:auto!important;display:block!important;object-fit:fill!important}
-    .cot-header.has-image{height:auto!important;overflow:visible!important}
-    .cot-body{padding:18px 28px!important}
-    .cot-watermark{width:400px!important;height:400px!important}
+
+    /* Modo imprimir COTIZACI\u00d3N: solo se ve el editor */
+    body.print-cot #viewDocumento{display:none!important}
+    body.print-cot .view-editor{display:block!important;height:auto!important;overflow:visible!important}
+    body.print-cot .preview-panel{background:white!important;padding:0!important;margin:0!important;overflow:visible!important;display:block!important;width:100%!important}
+    body.print-cot .cot-page{box-shadow:none!important;width:100%!important;max-width:100%!important;min-height:0!important;margin:0!important;padding:0!important;page-break-after:always;page-break-inside:avoid}
+    body.print-cot .cot-page:last-child{page-break-after:auto}
+    body.print-cot .cot-header{height:auto!important;min-height:140px}
+    body.print-cot .cot-header .header-bg-img{position:relative!important;width:100%!important;height:auto!important;display:block!important;object-fit:fill!important}
+    body.print-cot .cot-header.has-image{height:auto!important;overflow:visible!important}
+    body.print-cot .cot-body{padding:18px 28px!important}
+    body.print-cot .cot-watermark{width:400px!important;height:400px!important}
+
+    /* Modo imprimir DOCUMENTO: solo se ve el recibo/estado de cuenta */
+    body.print-doc #viewEditor{display:none!important}
+    body.print-doc .view-editor{display:none!important}
+    body.print-doc .cot-page{display:none!important}
+    body.print-doc .preview-panel{display:none!important}
+    body.print-doc #viewDocumento{display:block!important;padding:0!important;background:white!important}
+    body.print-doc #viewDocumento .btn,body.print-doc #viewDocumento button,body.print-doc #viewDocumento small{display:none!important}
+    body.print-doc #viewDocumento>div:first-child{display:none!important}
+    body.print-doc .recibo-page{box-shadow:none!important;margin:0!important;width:100%!important;max-width:100%!important}
+    body.print-doc .recibo-header{print-color-adjust:exact;-webkit-print-color-adjust:exact;height:auto!important;min-height:140px}
+    body.print-doc .recibo-header .header-bg-img{position:relative!important;width:100%!important;height:auto!important;display:block!important;object-fit:fill!important}
+    body.print-doc .recibo-header.has-image{height:auto!important}
+    body.print-doc .recibo-table thead th{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+    body.print-doc .recibo-stamp{print-color-adjust:exact;-webkit-print-color-adjust:exact}
 }
 </style>
 </head>
@@ -2043,24 +2088,46 @@ function limpiarHistorial(){if(!confirm('\u00bfEliminar TODAS las cotizaciones?'
 // ===== VENTAS =====
 function crearVenta(cotEntry){const ventas=getVentas();if(ventas.find(v=>v.cotizacionId===cotEntry.id))return;const d=cotEntry.data;const v={id:Date.now().toString(),cotizacionId:cotEntry.id,clienteId:cotEntry.clienteId||null,destino:d.destino,clienteNombre:d.tipoCliente==='empresa'?(d.empresaNombre||''):(d.clienteNombre||''),fechaInicio:d.fechaInicio,fechaFin:d.fechaFin,encargado:d.encargado,estado:'pendiente',checklist:defaultChecklistItems.map((t,i)=>({id:Date.now()+'_'+i,texto:t,completado:false})),fechaCreacion:new Date().toISOString()};ventas.unshift(v);saveVentas(ventas);}
 
-function renderVentas(){const ventas=getVentas();const grid=document.getElementById('ventasGrid');const search=document.getElementById('ventasSearch').value.toLowerCase();const filterE=document.getElementById('ventasFilterEstado').value;
-const filtered=ventas.filter(v=>{const text=[v.destino,v.clienteNombre,v.encargado].join(' ').toLowerCase();return(!search||text.includes(search))&&(!filterE||v.estado===filterE);});
-if(!filtered.length){grid.innerHTML=`<div class="grid-empty"><h3>${search||filterE?'Sin resultados':'Sin ventas'}</h3><p>Las ventas se crean al aceptar cotizaciones.</p></div>`;return;}
-const estadoLabels={pendiente:'Pendiente',en_proceso:'En proceso',completada:'Completada',cancelada:'Cancelada'};
-const estadoColors={pendiente:'var(--accent)',en_proceso:'var(--primary)',completada:'var(--success)',cancelada:'var(--danger)'};
-grid.innerHTML=filtered.map(v=>{const done=v.checklist.filter(c=>c.completado).length;const total=v.checklist.length;const pct=total?Math.round(done/total*100):0;
-return`<div class="list-row" style="border-left-color:${estadoColors[v.estado]||'var(--primary)'}">
-<div class="lr-main">
-<div class="lr-title">${esc(v.destino)}</div>
-<div class="lr-detail">${esc(v.clienteNombre)}</div>
-${v.fechaInicio?`<div class="lr-detail">${formatDateRange(v.fechaInicio,v.fechaFin)}</div>`:''}
-${v.encargado?`<div class="lr-detail">${esc(v.encargado)}</div>`:''}
-<span class="lr-badge" style="background:${estadoColors[v.estado]||'var(--primary)'};color:white;">${estadoLabels[v.estado]||v.estado}</span>
-${(()=>{const cob=calcCobranzaStatus(v);if(cob.montoTotal<=0)return'';return`<span class="lr-badge cob-status-${cob.estadoPago}" style="background:${cob.color}22;color:${cob.color};">${cob.estadoPagoLabel} ${cob.pagadoPct}%</span>`;})()}
-</div>
-<div class="lr-progress"><div class="venta-progress"><div class="venta-progress-bar" style="width:${pct}%"></div></div><div class="lr-progress-text">${done}/${total} (${pct}%)</div></div>
-<div class="lr-actions"><button class="btn-checklist" onclick="openChecklist('${v.id}')">&#9998; Checklist</button><button class="btn-checklist" style="background:#fff3e0;color:#d4830f;border:1px solid #e8941a;" onclick="openCobranza('${v.id}')">&#128176; Estado de cuenta</button><button class="btn btn-sm btn-ghost" onclick="cargarCotizacion('${v.cotizacionId}')">Ver</button></div>
-</div>`;}).join('');}
+function renderVentas(){
+    const ventas=getVentas();
+    const grid=document.getElementById('ventasGrid');
+    const search=document.getElementById('ventasSearch').value.toLowerCase();
+    const filterE=document.getElementById('ventasFilterEstado').value;
+    const filtered=ventas.filter(v=>{const text=[v.destino,v.clienteNombre,v.encargado].join(' ').toLowerCase();return(!search||text.includes(search))&&(!filterE||v.estado===filterE);});
+    if(!filtered.length){grid.innerHTML=`<div class="grid-empty"><h3>${search||filterE?'Sin resultados':'Sin ventas'}</h3><p>Las ventas se crean al aceptar cotizaciones.</p></div>`;return;}
+    const estadoLabels={pendiente:'Pendiente',en_proceso:'En proceso',completada:'Completada',cancelada:'Cancelada'};
+    const estadoColors={pendiente:'var(--accent)',en_proceso:'var(--primary)',completada:'var(--success)',cancelada:'var(--danger)'};
+    const rows=filtered.map(v=>{
+        const done=v.checklist.filter(c=>c.completado).length;
+        const total=v.checklist.length;
+        const pct=total?Math.round(done/total*100):0;
+        const cob=calcCobranzaStatus(v);
+        const cobBadge=cob.montoTotal>0?`<span class="lt-badge" style="background:${cob.color}22;color:${cob.color};">${cob.estadoPagoLabel} ${cob.pagadoPct}%</span>`:'<span style="color:var(--text-light);font-size:0.72rem;">-</span>';
+        return`<tr class="estado-${v.estado}">
+        <td><div class="lt-destino">${esc(v.destino||'-')}</div></td>
+        <td>${esc(v.clienteNombre||'-')}</td>
+        <td>${esc(v.encargado||'-')}</td>
+        <td>${v.fechaInicio?`<div>${formatDateRange(v.fechaInicio,v.fechaFin)}</div>`:'<span style="color:var(--text-light);">-</span>'}</td>
+        <td><span class="lt-badge" style="background:${estadoColors[v.estado]||'var(--primary)'};color:white;">${estadoLabels[v.estado]||v.estado}</span></td>
+        <td>${cobBadge}</td>
+        <td class="lt-progress-cell"><div class="venta-progress"><div class="venta-progress-bar" style="width:${pct}%"></div></div><div class="lr-progress-text">${done}/${total} (${pct}%)</div></td>
+        <td><div class="lt-actions"><button class="btn-checklist" onclick="openChecklist('${v.id}')" title="Checklist">&#9998;</button><button class="btn-checklist" style="background:#fff3e0;color:#d4830f;border:1px solid #e8941a;" onclick="openCobranza('${v.id}')" title="Estado de cuenta">&#128176;</button><button class="btn btn-sm btn-ghost" onclick="cargarCotizacion('${v.cotizacionId}')" title="Ver cotizaci\u00f3n">&#128065;</button></div></td>
+        </tr>`;
+    }).join('');
+    grid.innerHTML=`<table class="list-table">
+        <thead><tr>
+            <th>Destino</th>
+            <th>Cliente</th>
+            <th>Cotizador</th>
+            <th>Fechas de viaje</th>
+            <th>Estado</th>
+            <th>Cobranza</th>
+            <th>Checklist</th>
+            <th>Acciones</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+    </table>`;
+}
 
 function openChecklist(ventaId){const ventas=getVentas();const v=ventas.find(x=>x.id===ventaId);if(!v)return;document.getElementById('clVentaId').value=ventaId;document.getElementById('modalChecklistTitulo').textContent='Checklist - '+v.destino;document.getElementById('clEstado').value=v.estado;renderChecklistItems(v);document.getElementById('modalChecklist').classList.add('open');}
 
@@ -2258,18 +2325,27 @@ function renderDocumento(tipo,ventaId,pagoId){
     const clienteDoc=cli?(cli.tipoDocumento+' '+cli.numeroDocumento):'';
     const clienteEmail=cli?cli.email:'';
     const clienteTel=cli?cli.telefono:'';
+    // Buscar imagen del destino (la misma que usa la cotización que origina)
+    let headerImg=null;
+    if(cot&&cot.data){
+        const paisDat=cot.data.pais;
+        const destDat=cot.data.destinoSelect&&cot.data.destinoSelect!=='__custom'?cot.data.destinoSelect:cot.data.destino;
+        if(paisDat&&destDat)headerImg=getDestinoImage(paisDat,destDat);
+    }
+    // Header: si hay imagen del destino, úsala; si no, fallback con gradiente + info agencia
+    const headerHtmlRecibo=headerImg
+        ?`<div class="recibo-header has-image"><img class="header-bg-img" src="${headerImg}" alt=""></div>`
+        :`<div class="recibo-header"><div class="ag-info"><h2>${esc(ag.nombre||'Agencia de Viajes')}</h2><p>${ag.telefono?'Tel. '+esc(ag.telefono)+'<br>':''}${ag.cedula?'C\u00e9dula: '+esc(ag.cedula):''}</p></div></div>`;
+
     let bodyHtml='';
     if(tipo==='recibo'){
         const pago=(v.cobranza.pagos||[]).find(p=>p.id===pagoId);
         if(!pago){container.innerHTML='<div style="padding:30px;text-align:center;color:var(--danger);">Pago no encontrado.</div>';return;}
-        const saldoDespues=Math.max(0,c.montoTotal-c.pagado);
         bodyHtml=`
-        <div class="recibo-header">
-            <div class="ag-info">
-                <h2>${esc(ag.nombre||'Agencia de Viajes')}</h2>
-                <p>${ag.telefono?'Tel. '+esc(ag.telefono)+'<br>':''}${ag.cedula?'C\u00e9dula: '+esc(ag.cedula):''}</p>
-            </div>
-            <div class="doc-type">Recibo de Pago<div class="doc-num">N\u00b0 ${docNum}</div></div>
+        ${headerHtmlRecibo}
+        <div class="recibo-doc-bar">
+            <div class="doc-bar-title">Recibo de Pago</div>
+            <div class="doc-bar-num">N&deg; ${docNum}</div>
         </div>
         <div class="recibo-body">
             <div class="recibo-meta">
@@ -2300,12 +2376,10 @@ function renderDocumento(tipo,ventaId,pagoId){
         const pagosSorted=[...(v.cobranza.pagos||[])].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
         const pagosRows=pagosSorted.length?pagosSorted.map(p=>`<tr><td>${esc(p.fecha||'')}</td><td>${esc(p.metodo||'')}</td><td>${esc(p.referencia||'-')}</td><td>${esc(p.nota||'-')}</td><td style="text-align:right;font-weight:700;">${fmtMoney(p.monto,c.moneda)}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:var(--text-light);font-style:italic;padding:16px;">Sin pagos registrados a la fecha</td></tr>';
         bodyHtml=`
-        <div class="recibo-header">
-            <div class="ag-info">
-                <h2>${esc(ag.nombre||'Agencia de Viajes')}</h2>
-                <p>${ag.telefono?'Tel. '+esc(ag.telefono)+'<br>':''}${ag.cedula?'C\u00e9dula: '+esc(ag.cedula):''}</p>
-            </div>
-            <div class="doc-type">Estado de Cuenta<div class="doc-num">N\u00b0 ${docNum}</div></div>
+        ${headerHtmlRecibo}
+        <div class="recibo-doc-bar">
+            <div class="doc-bar-title">Estado de Cuenta</div>
+            <div class="doc-bar-num">N&deg; ${docNum}</div>
         </div>
         <div class="recibo-body">
             <div class="recibo-meta">
@@ -2341,22 +2415,42 @@ const clientes=getClientes();let found=null;if(email)found=clientes.find(c=>c.em
 if(found){if(telefono&&telefono!==found.telefono)found.telefono=telefono;if(email&&email!==found.email)found.email=email;found.fechaActualizacion=new Date().toISOString();saveClientes(clientes);updateBadges();return found.id;}
 const nuevo={id:Date.now().toString(),nombreCompleto:nombre,tipoDocumento:'cedula',numeroDocumento:'',nacionalidad:'',fechaNacimiento:'',telefono,email,direccion:'',empresa:data.tipoCliente==='empresa'?data.empresaNombre:'',numeroPasaporte:'',vencimientoPasaporte:'',viajeroProgramaAerolinea:'',viajeroProgramaNumero:'',notas:'',fechaCreacion:new Date().toISOString(),fechaActualizacion:new Date().toISOString()};clientes.unshift(nuevo);saveClientes(clientes);updateBadges();return nuevo.id;}
 
-function renderClientes(){const clientes=getClientes();const grid=document.getElementById('clientesGrid');const search=document.getElementById('clientesSearch').value.toLowerCase();const filtered=clientes.filter(c=>{const text=[c.nombreCompleto,c.email,c.telefono,c.numeroDocumento,c.empresa].join(' ').toLowerCase();return!search||text.includes(search);});
-if(!filtered.length){grid.innerHTML=`<div class="grid-empty"><h3>${search?'Sin resultados':'Sin clientes'}</h3><p>Los clientes se crean al guardar cotizaciones o manualmente.</p></div>`;return;}
-const hist=getHistorial();const ventas=getVentas();
-grid.innerHTML=filtered.map(c=>{const numCots=hist.filter(h=>h.clienteId===c.id).length;const numVentas=ventas.filter(v=>v.clienteId===c.id).length;
-return`<div class="list-row">
-<div class="lr-main">
-<div class="lr-title">${esc(c.nombreCompleto)}</div>
-${c.email?`<div class="lr-detail">${esc(c.email)}</div>`:''}
-${c.telefono?`<div class="lr-detail">Tel: ${esc(c.telefono)}</div>`:''}
-${c.empresa?`<div class="lr-detail">${esc(c.empresa)}</div>`:''}
-${c.numeroPasaporte?`<div class="lr-detail">Pasap: ${esc(c.numeroPasaporte)}</div>`:''}
-<span class="lr-badge" style="background:var(--primary-light);color:var(--primary-dark);">${numCots} cot.</span>
-<span class="lr-badge" style="background:var(--accent-light);color:var(--accent-dark);">${numVentas} venta${numVentas!==1?'s':''}</span>
-</div>
-<div class="lr-actions"><button class="btn btn-sm btn-primary" onclick="openClienteModal('${c.id}')">Editar</button><button class="btn btn-sm btn-danger" onclick="eliminarCliente('${c.id}')">Eliminar</button></div>
-</div>`;}).join('');}
+function renderClientes(){
+    const clientes=getClientes();
+    const grid=document.getElementById('clientesGrid');
+    const search=document.getElementById('clientesSearch').value.toLowerCase();
+    const filtered=clientes.filter(c=>{const text=[c.nombreCompleto,c.email,c.telefono,c.numeroDocumento,c.empresa].join(' ').toLowerCase();return!search||text.includes(search);});
+    if(!filtered.length){grid.innerHTML=`<div class="grid-empty"><h3>${search?'Sin resultados':'Sin clientes'}</h3><p>Los clientes se crean al guardar cotizaciones o manualmente.</p></div>`;return;}
+    const hist=getHistorial();
+    const ventas=getVentas();
+    const rows=filtered.map(c=>{
+        const numCots=hist.filter(h=>h.clienteId===c.id).length;
+        const numVentas=ventas.filter(v=>v.clienteId===c.id).length;
+        return`<tr>
+        <td><div class="lt-nombre">${esc(c.nombreCompleto||'-')}</div></td>
+        <td>${c.tipoDocumento?'<span style="text-transform:capitalize;color:var(--text-light);font-size:0.7rem;">'+esc(c.tipoDocumento)+'</span> ':''}${esc(c.numeroDocumento||'-')}</td>
+        <td>${c.email?esc(c.email):'<span style="color:var(--text-light);">-</span>'}</td>
+        <td>${c.telefono?esc(c.telefono):'<span style="color:var(--text-light);">-</span>'}</td>
+        <td>${c.empresa?esc(c.empresa):'<span style="color:var(--text-light);">-</span>'}</td>
+        <td>${c.numeroPasaporte?esc(c.numeroPasaporte):'<span style="color:var(--text-light);">-</span>'}${c.vencimientoPasaporte?`<div class="lt-secondary">vence ${esc(c.vencimientoPasaporte)}</div>`:''}</td>
+        <td><span class="lt-badge" style="background:var(--primary-light);color:var(--primary-dark);">${numCots} cot.</span> <span class="lt-badge" style="background:var(--accent-light);color:#d4830f;">${numVentas} ventas</span></td>
+        <td><div class="lt-actions"><button class="btn btn-sm btn-primary" onclick="openClienteModal('${c.id}')">Editar</button><button class="btn btn-sm btn-danger" onclick="eliminarCliente('${c.id}')">&times;</button></div></td>
+        </tr>`;
+    }).join('');
+    grid.innerHTML=`<table class="list-table">
+        <thead><tr>
+            <th>Nombre completo</th>
+            <th>Documento</th>
+            <th>Email</th>
+            <th>Tel&eacute;fono</th>
+            <th>Empresa</th>
+            <th>Pasaporte</th>
+            <th>Actividad</th>
+            <th>Acciones</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+    </table>`;
+}
 
 function openClienteModal(id){const modal=document.getElementById('modalCliente');const titulo=document.getElementById('modalClienteTitulo');if(id){const clientes=getClientes();const c=clientes.find(x=>x.id===id);if(!c)return;titulo.textContent='Editar Cliente';document.getElementById('mcId').value=id;document.getElementById('mcNombre').value=c.nombreCompleto||'';document.getElementById('mcTipoDoc').value=c.tipoDocumento||'cedula';document.getElementById('mcNumDoc').value=c.numeroDocumento||'';document.getElementById('mcNacionalidad').value=c.nacionalidad||'';document.getElementById('mcFechaNac').value=c.fechaNacimiento||'';document.getElementById('mcTelefono').value=c.telefono||'';document.getElementById('mcEmail').value=c.email||'';document.getElementById('mcDireccion').value=c.direccion||'';document.getElementById('mcEmpresa').value=c.empresa||'';document.getElementById('mcPasaporte').value=c.numeroPasaporte||'';document.getElementById('mcPasaporteVenc').value=c.vencimientoPasaporte||'';document.getElementById('mcVFAerolinea').value=c.viajeroProgramaAerolinea||'';document.getElementById('mcVFNumero').value=c.viajeroProgramaNumero||'';document.getElementById('mcNotas').value=c.notas||'';}else{titulo.textContent='Nuevo Cliente';document.getElementById('mcId').value='';['mcNombre','mcNumDoc','mcNacionalidad','mcFechaNac','mcTelefono','mcEmail','mcDireccion','mcEmpresa','mcPasaporte','mcPasaporteVenc','mcVFAerolinea','mcVFNumero','mcNotas'].forEach(id=>document.getElementById(id).value='');document.getElementById('mcTipoDoc').value='cedula';}modal.classList.add('open');}
 
@@ -2412,6 +2506,16 @@ document.addEventListener('keydown',function(e){
 });
 
 // ===== START =====
+// Detectar qué vista imprimir y agregar clase al body
+window.addEventListener('beforeprint',function(){
+    const docActive=document.getElementById('viewDocumento')?.classList.contains('active');
+    document.body.classList.remove('print-cot','print-doc');
+    document.body.classList.add(docActive?'print-doc':'print-cot');
+});
+window.addEventListener('afterprint',function(){
+    document.body.classList.remove('print-cot','print-doc');
+});
+
 init();
 </script>
 </body>
