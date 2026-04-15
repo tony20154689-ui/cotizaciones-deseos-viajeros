@@ -360,11 +360,78 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
 .calc-apply:hover{filter:brightness(1.1)}
 .row-manual-override .op-adulto,.row-manual-override .op-nino,.row-manual-override .op-bebe{background:#fffce8!important}
 
+/* ===== DASHBOARD ===== */
+.dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.dash-title{font-family:'Playfair Display',serif;color:var(--primary-dark);font-size:1.6rem}
+.dash-subtitle{color:var(--text-light);font-size:0.85rem;margin-top:2px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:22px}
+.kpi-card{background:white;border-radius:12px;padding:18px 20px;box-shadow:0 2px 12px rgba(0,0,0,0.07);border-left:4px solid var(--primary);position:relative;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,0.1)}
+.kpi-card.green{border-left-color:var(--success)}
+.kpi-card.accent{border-left-color:var(--accent)}
+.kpi-card.primary-vivid{border-left-color:var(--primary-vivid)}
+.kpi-label{font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-light);font-weight:700;margin-bottom:6px}
+.kpi-value{font-family:'Playfair Display',serif;font-size:2.3rem;color:var(--primary-dark);font-weight:700;line-height:1}
+.kpi-card.green .kpi-value{color:var(--success)}
+.kpi-card.accent .kpi-value{color:#d4830f}
+.kpi-sub{font-size:0.78rem;color:var(--text-light);margin-top:6px;display:flex;align-items:center;gap:5px}
+.kpi-trend{font-size:0.72rem;font-weight:700;padding:2px 7px;border-radius:10px;display:inline-flex;align-items:center;gap:3px}
+.kpi-trend.up{background:rgba(39,174,96,0.12);color:var(--success)}
+.kpi-trend.down{background:rgba(231,76,60,0.12);color:var(--danger)}
+.kpi-trend.flat{background:rgba(102,102,102,0.1);color:var(--text-light)}
+.kpi-icon{position:absolute;top:14px;right:16px;font-size:1.6rem;opacity:0.25}
+
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:14px;margin-bottom:22px}
+.dash-card{background:white;border-radius:12px;padding:18px 20px;box-shadow:0 2px 12px rgba(0,0,0,0.07)}
+.dash-card h3{font-family:'Playfair Display',serif;color:var(--primary-dark);font-size:1rem;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.dash-card .dash-empty{text-align:center;padding:30px 10px;color:var(--text-light);font-size:0.85rem;font-style:italic}
+
+/* Bar chart vertical (meses) */
+.chart-bars-v{display:flex;align-items:flex-end;gap:8px;height:160px;padding:0 4px;border-bottom:1px solid var(--border);position:relative}
+.chart-bar-v{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.chart-bar-v .bar-fill{width:100%;max-width:50px;background:linear-gradient(180deg,var(--primary) 0%,var(--primary-dark) 100%);border-radius:4px 4px 0 0;transition:height 0.4s;position:relative;min-height:3px}
+.chart-bar-v .bar-value{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:0.7rem;font-weight:700;color:var(--primary-dark);white-space:nowrap}
+.chart-bars-v+.chart-labels{display:flex;gap:8px;margin-top:6px}
+.chart-bars-v+.chart-labels span{flex:1;text-align:center;font-size:0.7rem;color:var(--text-light);text-transform:capitalize}
+
+/* Bar chart horizontal (encargados, destinos) */
+.chart-bars-h{display:flex;flex-direction:column;gap:8px}
+.chart-bar-h{display:flex;align-items:center;gap:8px;font-size:0.78rem}
+.chart-bar-h .bar-label{flex:0 0 100px;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chart-bar-h .bar-track{flex:1;height:20px;background:var(--bg);border-radius:10px;overflow:hidden;position:relative}
+.chart-bar-h .bar-fill{height:100%;background:linear-gradient(90deg,var(--primary-vivid),var(--primary));border-radius:10px;transition:width 0.5s;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;color:white;font-weight:700;font-size:0.7rem;min-width:22px}
+.chart-bar-h:nth-child(2) .bar-fill{background:linear-gradient(90deg,#f3b04d,var(--accent))}
+.chart-bar-h:nth-child(3) .bar-fill{background:linear-gradient(90deg,#5dc9a8,var(--success))}
+.chart-bar-h .bar-count{flex:0 0 40px;text-align:right;font-weight:700;color:var(--primary-dark)}
+
+/* Donut chart */
+.donut-wrap{display:flex;align-items:center;gap:16px}
+.donut-svg{flex-shrink:0;transform:rotate(-90deg)}
+.donut-svg circle{fill:none;stroke-width:24}
+.donut-legend{flex:1;display:flex;flex-direction:column;gap:6px;font-size:0.78rem}
+.donut-legend-item{display:flex;align-items:center;gap:8px}
+.donut-legend-item .dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.donut-legend-item .label{flex:1;color:var(--text)}
+.donut-legend-item .count{font-weight:700;color:var(--primary-dark)}
+
+/* Lists */
+.dash-list{display:flex;flex-direction:column;gap:8px}
+.dash-list-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:var(--bg);font-size:0.8rem;transition:background 0.15s}
+.dash-list-item:hover{background:rgba(10,126,140,0.06)}
+.dash-list-item .dli-main{flex:1;min-width:0}
+.dash-list-item .dli-title{font-weight:700;color:var(--primary-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-list-item .dli-sub{color:var(--text-light);font-size:0.72rem}
+.dash-list-item .dli-badge{font-size:0.68rem;padding:2px 8px;border-radius:10px;font-weight:700;white-space:nowrap}
+.dli-badge.ok{background:rgba(39,174,96,0.15);color:var(--success)}
+.dli-badge.warn{background:rgba(232,148,26,0.15);color:#d4830f}
+.dli-badge.danger{background:rgba(231,76,60,0.15);color:var(--danger)}
+.dli-badge.info{background:rgba(10,126,140,0.12);color:var(--primary-dark)}
+
 @page{margin:0;size:letter}
 @media print{
     *{print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
     html,body{margin:0!important;padding:0!important;overflow:visible!important;background:white!important;width:100%!important;height:auto!important}
-    .app-sidebar,.form-panel,.form-panel-splitter,.app-header,.cot-adjuntos-page,.modal-overlay,.img-lightbox,#viewConfiguracion,#viewHistorial,#viewEncabezados,#viewVentas,#viewClientes{display:none!important}
+    .app-sidebar,.form-panel,.form-panel-splitter,.app-header,.cot-adjuntos-page,.modal-overlay,.img-lightbox,#viewDashboard,#viewConfiguracion,#viewHistorial,#viewEncabezados,#viewVentas,#viewClientes{display:none!important}
     .app-layout,.app-main,.main-views{display:block!important;height:auto!important;overflow:visible!important;width:100%!important}
     .view-editor{display:block!important;height:auto!important;overflow:visible!important}
     .preview-panel{background:white!important;padding:0!important;margin:0!important;overflow:visible!important;display:block!important;width:100%!important}
@@ -385,6 +452,10 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
     <div class="sidebar-logo">
         <h2>Deseos Viajeros</h2>
         <p>Sistema de Cotizaciones</p>
+    </div>
+    <div class="sidebar-section">
+        <div class="sidebar-section-label">Inicio</div>
+        <div class="sidebar-item" onclick="nav('dashboard')"><span class="si-icon">&#128202;</span>Dashboard</div>
     </div>
     <div class="sidebar-section">
         <div class="sidebar-section-label">Cotizaciones</div>
@@ -410,6 +481,11 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
     </div>
 </div>
 <div class="main-views">
+
+<!-- VIEW: DASHBOARD -->
+<div class="app-view view-list" id="viewDashboard">
+    <div id="dashContent"></div>
+</div>
 
 <!-- VIEW: EDITOR -->
 <div class="app-view view-editor active" id="viewEditor">
@@ -699,17 +775,19 @@ function populateEncargadosSelect(){
 function nav(view){
     document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
     const items=document.querySelectorAll('.sidebar-item');
-    const map={editor:0,historial:1,encabezados:2,ventas:3,clientes:4,configuracion:5};
+    const map={dashboard:0,editor:1,historial:2,encabezados:3,ventas:4,clientes:5,configuracion:6};
     if(map[view]!==undefined)items[map[view]].classList.add('active');
     document.querySelectorAll('.app-view').forEach(v=>v.classList.remove('active'));
-    const titles={editor:'Editor de Cotizaci\u00f3n',historial:'Historial de Cotizaciones',encabezados:'Encabezados por Destino',ventas:'Ventas',clientes:'Clientes',configuracion:'Configuraci\u00f3n'};
+    const titles={dashboard:'Dashboard',editor:'Editor de Cotizaci\u00f3n',historial:'Historial de Cotizaciones',encabezados:'Encabezados por Destino',ventas:'Ventas',clientes:'Clientes',configuracion:'Configuraci\u00f3n'};
     document.getElementById('headerTitle').textContent=titles[view]||'';
     const ha=document.getElementById('headerActions');
     if(view==='editor')ha.innerHTML='<button class="btn btn-outline" onclick="resetForm()">&#128260; Nueva</button><button class="btn btn-accent" onclick="window.print()">&#128424; Exportar PDF</button>';
     else if(view==='clientes')ha.innerHTML='<button class="btn btn-accent" onclick="openClienteModal()">+ Nuevo Cliente</button>';
+    else if(view==='dashboard')ha.innerHTML='<button class="btn btn-outline" onclick="renderDashboard()">&#8635; Actualizar</button>';
     else ha.innerHTML='';
-    const viewIds={editor:'viewEditor',historial:'viewHistorial',encabezados:'viewEncabezados',ventas:'viewVentas',clientes:'viewClientes',configuracion:'viewConfiguracion'};
+    const viewIds={dashboard:'viewDashboard',editor:'viewEditor',historial:'viewHistorial',encabezados:'viewEncabezados',ventas:'viewVentas',clientes:'viewClientes',configuracion:'viewConfiguracion'};
     document.getElementById(viewIds[view]).classList.add('active');
+    if(view==='dashboard')renderDashboard();
     if(view==='historial')renderHistorial();
     if(view==='encabezados')renderEncabezados();
     if(view==='ventas')renderVentas();
@@ -767,6 +845,202 @@ function restoreFormPanelWidth(){
         const panel=document.querySelector('.form-panel');
         if(panel){panel.style.width=w+'px';panel.style.minWidth=w+'px';}
     }
+}
+
+// ===== DASHBOARD =====
+function calcDashMetrics(){
+    const hist=getHistorial(),ventas=getVentas(),clientes=getClientes();
+    const now=new Date();
+    const thisMonth=now.getMonth(),thisYear=now.getFullYear();
+    const startOfMonth=(d)=>new Date(d.getFullYear(),d.getMonth(),1);
+    const endOfMonth=(d)=>new Date(d.getFullYear(),d.getMonth()+1,0,23,59,59);
+    const lastMonthDate=new Date(thisYear,thisMonth-1,1);
+    // --- KPIs ---
+    const totalCot=hist.length;
+    const thisMonthCot=hist.filter(h=>{const d=new Date(h.fecha);return d.getMonth()===thisMonth&&d.getFullYear()===thisYear;}).length;
+    const lastMonthCot=hist.filter(h=>{const d=new Date(h.fecha);return d.getMonth()===lastMonthDate.getMonth()&&d.getFullYear()===lastMonthDate.getFullYear();}).length;
+    const cotGrowth=lastMonthCot>0?Math.round(((thisMonthCot-lastMonthCot)/lastMonthCot)*100):(thisMonthCot>0?100:0);
+    const aceptadas=hist.filter(h=>h.aceptada).length;
+    const conversion=totalCot>0?Math.round((aceptadas/totalCot)*100):0;
+    const ventasActivas=ventas.filter(v=>v.estado!=='cancelada').length;
+    const ventasCompletadas=ventas.filter(v=>v.estado==='completada').length;
+    const ventasPendientes=ventas.filter(v=>v.estado==='pendiente'||v.estado==='en_proceso').length;
+    const totalClientes=clientes.length;
+    // Ingreso estimado (suma de primera opción × 2 adultos como proxy conservador)
+    let ingresoEstimado=0;
+    ventas.filter(v=>v.estado!=='cancelada').forEach(v=>{
+        const cot=hist.find(h=>h.id===v.cotizacionId);
+        if(cot&&cot.data&&cot.data.opciones&&cot.data.opciones.length){
+            const adulto=num(cot.data.opciones[0].adulto);
+            if(adulto>0)ingresoEstimado+=adulto*2; // asume 2 adultos en promedio
+        }
+    });
+    // --- Cotizaciones por mes (últimos 6) ---
+    const monthsES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    const byMonth=[];
+    for(let i=5;i>=0;i--){
+        const d=new Date(thisYear,thisMonth-i,1);
+        const count=hist.filter(h=>{const hd=new Date(h.fecha);return hd.getMonth()===d.getMonth()&&hd.getFullYear()===d.getFullYear();}).length;
+        byMonth.push({label:monthsES[d.getMonth()]+' '+String(d.getFullYear()).slice(2),count});
+    }
+    // --- Por encargado ---
+    const byEnc={};
+    hist.forEach(h=>{const e=(h.data&&h.data.encargado)||'Sin asignar';byEnc[e]=(byEnc[e]||0)+1;});
+    const encRanking=Object.entries(byEnc).sort((a,b)=>b[1]-a[1]);
+    // --- Por formato ---
+    const byFormato={america:0,europa:0,crucero:0};
+    hist.forEach(h=>{const f=(h.data&&h.data.formato)||'america';if(byFormato[f]!==undefined)byFormato[f]++;});
+    // --- Top destinos ---
+    const byDestino={};
+    hist.forEach(h=>{const d=(h.data&&h.data.destino)||'';if(d)byDestino[d]=(byDestino[d]||0)+1;});
+    const topDestinos=Object.entries(byDestino).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    // --- Próximos viajes (próximos 60 días) ---
+    const in60=new Date();in60.setDate(in60.getDate()+60);
+    const proximos=ventas
+        .filter(v=>v.estado!=='cancelada'&&v.fechaInicio)
+        .map(v=>({...v,fi:new Date(v.fechaInicio+'T12:00:00')}))
+        .filter(v=>v.fi>=new Date(now.getFullYear(),now.getMonth(),now.getDate())&&v.fi<=in60)
+        .sort((a,b)=>a.fi-b.fi)
+        .slice(0,6);
+    // --- Ventas con checklist incompleto ---
+    const ventasPorAtender=ventas
+        .filter(v=>v.estado==='pendiente'||v.estado==='en_proceso')
+        .map(v=>{const done=v.checklist.filter(c=>c.completado).length;const total=v.checklist.length;return{...v,done,total,pct:total?done/total:0};})
+        .sort((a,b)=>a.pct-b.pct)
+        .slice(0,5);
+    return {totalCot,thisMonthCot,lastMonthCot,cotGrowth,aceptadas,conversion,ventasActivas,ventasCompletadas,ventasPendientes,totalClientes,ingresoEstimado,byMonth,encRanking,byFormato,topDestinos,proximos,ventasPorAtender};
+}
+
+function renderDashboard(){
+    const m=calcDashMetrics();
+    const container=document.getElementById('dashContent');
+    const now=new Date();
+    const fechaHoy=now.toLocaleDateString('es-CR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    // Barras verticales (meses)
+    const maxMonth=Math.max(1,...m.byMonth.map(x=>x.count));
+    const barsV=m.byMonth.map(mo=>{
+        const h=Math.round((mo.count/maxMonth)*100);
+        return`<div class="chart-bar-v"><div class="bar-fill" style="height:${h}%"><span class="bar-value">${mo.count||''}</span></div></div>`;
+    }).join('');
+    const labelsV=m.byMonth.map(mo=>`<span>${mo.label}</span>`).join('');
+    // Barras horizontales (encargados)
+    const maxEnc=Math.max(1,...m.encRanking.map(x=>x[1]));
+    const barsEnc=m.encRanking.length?m.encRanking.map(([name,count])=>{
+        const w=Math.round((count/maxEnc)*100);
+        return`<div class="chart-bar-h"><div class="bar-label" title="${esc(name)}">${esc(name)}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%">${count}</div></div></div>`;
+    }).join(''):'<div class="dash-empty">Sin cotizaciones registradas</div>';
+    // Donut (formatos)
+    const totalF=m.byFormato.america+m.byFormato.europa+m.byFormato.crucero;
+    const donutHtml=(()=>{
+        if(totalF===0)return'<div class="dash-empty">Sin datos</div>';
+        const r=60,circ=2*Math.PI*r;
+        const colors={america:'#429D9D',europa:'#00D6D4',crucero:'#e8941a'};
+        const labels={america:'Am\u00e9rica',europa:'Europa/Asia',crucero:'Cruceros'};
+        let offset=0;
+        const circles=Object.entries(m.byFormato).filter(([k,v])=>v>0).map(([k,v])=>{
+            const pct=v/totalF;
+            const dash=circ*pct;
+            const el=`<circle cx="80" cy="80" r="${r}" stroke="${colors[k]}" stroke-dasharray="${dash} ${circ-dash}" stroke-dashoffset="${-offset}"/>`;
+            offset+=dash;
+            return el;
+        }).join('');
+        const legend=Object.entries(m.byFormato).filter(([k,v])=>v>0).map(([k,v])=>{
+            return`<div class="donut-legend-item"><div class="dot" style="background:${colors[k]}"></div><div class="label">${labels[k]}</div><div class="count">${v} (${Math.round(v/totalF*100)}%)</div></div>`;
+        }).join('');
+        return`<div class="donut-wrap"><svg class="donut-svg" width="160" height="160" viewBox="0 0 160 160"><circle cx="80" cy="80" r="${r}" stroke="#f0f0f0"/>${circles}</svg><div class="donut-legend">${legend}</div></div>`;
+    })();
+    // Top destinos
+    const maxDest=Math.max(1,...m.topDestinos.map(x=>x[1]));
+    const destHtml=m.topDestinos.length?m.topDestinos.map(([name,count])=>{
+        const w=Math.round((count/maxDest)*100);
+        return`<div class="chart-bar-h"><div class="bar-label" title="${esc(name)}">${esc(name)}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%">${count}</div></div></div>`;
+    }).join(''):'<div class="dash-empty">Sin destinos registrados</div>';
+    // Próximos viajes
+    const proximosHtml=m.proximos.length?m.proximos.map(p=>{
+        const diasFaltan=Math.ceil((p.fi-now)/(1000*60*60*24));
+        const badge=diasFaltan<=7?'danger':(diasFaltan<=15?'warn':'info');
+        return`<div class="dash-list-item"><div class="dli-main"><div class="dli-title">${esc(p.destino)}</div><div class="dli-sub">${esc(p.clienteNombre||'')} &bull; ${formatDateRange(p.fechaInicio,p.fechaFin)}</div></div><span class="dli-badge ${badge}">en ${diasFaltan} d\u00eda${diasFaltan!==1?'s':''}</span></div>`;
+    }).join(''):'<div class="dash-empty">No hay viajes en los pr\u00f3ximos 60 d\u00edas</div>';
+    // Ventas por atender
+    const atenderHtml=m.ventasPorAtender.length?m.ventasPorAtender.map(v=>{
+        const pctInt=Math.round(v.pct*100);
+        const badge=v.pct<0.3?'danger':(v.pct<0.7?'warn':'ok');
+        return`<div class="dash-list-item"><div class="dli-main"><div class="dli-title">${esc(v.destino)}</div><div class="dli-sub">${esc(v.clienteNombre||'')}${v.encargado?' &bull; '+esc(v.encargado):''}</div></div><span class="dli-badge ${badge}">${v.done}/${v.total} (${pctInt}%)</span></div>`;
+    }).join(''):'<div class="dash-empty">Todas las ventas est\u00e1n al d\u00eda &#127881;</div>';
+
+    // Trend indicators
+    const trendClass=m.cotGrowth>0?'up':(m.cotGrowth<0?'down':'flat');
+    const trendArrow=m.cotGrowth>0?'&uarr;':(m.cotGrowth<0?'&darr;':'=');
+    const trendText=m.cotGrowth>0?`+${m.cotGrowth}%`:(m.cotGrowth<0?`${m.cotGrowth}%`:'0%');
+
+    container.innerHTML=`
+    <div class="dash-header">
+        <div>
+            <div class="dash-title">\u00a1Hola! \u{1F44B}</div>
+            <div class="dash-subtitle">${fechaHoy.charAt(0).toUpperCase()+fechaHoy.slice(1)}</div>
+        </div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-icon">&#128196;</div>
+            <div class="kpi-label">Cotizaciones este mes</div>
+            <div class="kpi-value">${m.thisMonthCot}</div>
+            <div class="kpi-sub">de ${m.totalCot} en total <span class="kpi-trend ${trendClass}">${trendArrow} ${trendText}</span></div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-icon">&#9989;</div>
+            <div class="kpi-label">Tasa de conversi\u00f3n</div>
+            <div class="kpi-value">${m.conversion}%</div>
+            <div class="kpi-sub">${m.aceptadas} aceptadas de ${m.totalCot}</div>
+        </div>
+        <div class="kpi-card accent">
+            <div class="kpi-icon">&#128188;</div>
+            <div class="kpi-label">Ventas activas</div>
+            <div class="kpi-value">${m.ventasActivas}</div>
+            <div class="kpi-sub">${m.ventasPendientes} en proceso &bull; ${m.ventasCompletadas} completadas</div>
+        </div>
+        <div class="kpi-card primary-vivid">
+            <div class="kpi-icon">&#128178;</div>
+            <div class="kpi-label">Ingreso estimado</div>
+            <div class="kpi-value">$${m.ingresoEstimado.toLocaleString('es-CR',{maximumFractionDigits:0})}</div>
+            <div class="kpi-sub">Ventas no canceladas &bull; estimaci\u00f3n</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon">&#128101;</div>
+            <div class="kpi-label">Clientes registrados</div>
+            <div class="kpi-value">${m.totalClientes}</div>
+            <div class="kpi-sub">Base de datos total</div>
+        </div>
+    </div>
+
+    <div class="dash-grid">
+        <div class="dash-card">
+            <h3>&#128200; Cotizaciones por mes</h3>
+            <div class="chart-bars-v">${barsV}</div>
+            <div class="chart-labels">${labelsV}</div>
+        </div>
+        <div class="dash-card">
+            <h3>&#129309; Por encargado</h3>
+            <div class="chart-bars-h">${barsEnc}</div>
+        </div>
+        <div class="dash-card">
+            <h3>&#127758; Distribuci\u00f3n por formato</h3>
+            ${donutHtml}
+        </div>
+        <div class="dash-card">
+            <h3>&#127794; Top destinos</h3>
+            <div class="chart-bars-h">${destHtml}</div>
+        </div>
+        <div class="dash-card">
+            <h3>&#9992; Pr\u00f3ximos viajes (60 d\u00edas)</h3>
+            <div class="dash-list">${proximosHtml}</div>
+        </div>
+        <div class="dash-card">
+            <h3>&#9888; Ventas que requieren atenci\u00f3n</h3>
+            <div class="dash-list">${atenderHtml}</div>
+        </div>
+    </div>`;
 }
 
 // ===== CONFIGURACION VIEW =====
