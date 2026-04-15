@@ -620,8 +620,16 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
     body.print-cot #viewDocumento{display:none!important}
     body.print-cot .view-editor{display:block!important;height:auto!important;overflow:visible!important}
     body.print-cot .preview-panel{background:white!important;padding:0!important;margin:0!important;overflow:visible!important;display:block!important;width:100%!important}
-    body.print-cot .cot-page{box-shadow:none!important;width:100%!important;max-width:100%!important;min-height:0!important;margin:0!important;padding:0!important;page-break-after:always;page-break-inside:avoid}
-    body.print-cot .cot-page:last-child{page-break-after:auto}
+    body.print-cot .cot-page{box-shadow:none!important;width:100%!important;max-width:100%!important;min-height:0!important;height:auto!important;margin:0!important;padding:0!important;page-break-after:auto;page-break-inside:auto;break-after:auto;break-inside:auto;overflow:visible!important}
+    body.print-cot .cot-body{padding:20px 30px!important;page-break-inside:auto}
+    body.print-cot .cot-section{page-break-inside:avoid;break-inside:avoid}
+    body.print-cot .cot-pricing{page-break-inside:avoid;break-inside:avoid}
+    body.print-cot .cot-price-table{page-break-inside:avoid;break-inside:avoid}
+    body.print-cot .cot-politicas{page-break-inside:auto}
+    body.print-cot .cot-bank-section{page-break-inside:avoid;break-inside:avoid}
+    /* Ocultar los headers duplicados (de las páginas 2, 3) al imprimir, solo mostrar el primero */
+    body.print-cot .cot-page:not(:first-of-type) .cot-header{display:none!important}
+    body.print-cot .cot-page:not(:first-of-type) .cot-watermark{display:none!important}
     body.print-cot .cot-header{height:auto!important;min-height:140px}
     body.print-cot .cot-header .header-bg-img{position:relative!important;width:100%!important;height:auto!important;display:block!important;object-fit:fill!important}
     body.print-cot .cot-header.has-image{height:auto!important;overflow:visible!important}
@@ -703,6 +711,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
     </div>
     <!-- Cliente -->
     <div class="form-section"><div class="form-section-header" onclick="toggleSection(this)">Datos del Cliente<span class="toggle">&#9660;</span></div><div class="form-section-body">
+        <label style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--text);background:var(--bg);padding:7px 10px;border-radius:6px;margin-bottom:8px;cursor:pointer;"><input type="checkbox" id="mostrarClienteEnCot" checked onchange="updatePreview()" style="width:auto;accent-color:var(--primary);"> Mostrar datos del cliente en la cotizaci&oacute;n impresa</label>
         <div class="tipo-cliente-toggle">
             <button class="tipo-cliente-btn active" data-tipo="persona" onclick="switchTipoCliente('persona')">Persona</button>
             <button class="tipo-cliente-btn" data-tipo="empresa" onclick="switchTipoCliente('empresa')">Empresa</button>
@@ -730,6 +739,12 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
         <p style="font-size:0.72rem;color:var(--text-light);margin-bottom:6px;">Detalle de hoteles con rango de fechas (seleccione entrada y salida).</p>
         <div id="hospedajeContainer"></div>
         <button class="btn btn-sm btn-primary" onclick="addHospedaje()" style="margin-top:5px;">+ Agregar hotel</button>
+    </div></div>
+    <!-- Tours incluidos -->
+    <div class="form-section" id="toursSection" style="display:none;"><div class="form-section-header" onclick="toggleSection(this)">Tours incluidos<span class="toggle">&#9660;</span></div><div class="form-section-body">
+        <p style="font-size:0.72rem;color:var(--text-light);margin-bottom:6px;">Tours y actividades incluidas en el paquete (solo texto).</p>
+        <div id="toursContainer"></div>
+        <button class="btn btn-sm btn-primary" onclick="addTour()" style="margin-top:5px;">+ Agregar tour</button>
     </div></div>
     <!-- Itinerario propuesto (Europa/Asia) -->
     <div class="form-section" id="itinerarioSection" style="display:none;"><div class="form-section-header" onclick="toggleSection(this)">Itinerario propuesto<span class="toggle">&#9660;</span></div><div class="form-section-body">
@@ -781,7 +796,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
     <div class="form-section"><div class="form-section-header" onclick="toggleSection(this)">Adjuntos internos<span class="toggle">&#9660;</span></div><div class="form-section-body">
         <p style="font-size:0.72rem;color:var(--text-light);margin-bottom:6px;">Im&aacute;genes de apoyo (no visibles al cliente en PDF).</p>
         <div class="form-row" style="margin-bottom:6px;"><div class="form-group"><label>Categor&iacute;a</label><select id="adjuntoCategoria"><option value="Vuelo">Vuelo</option><option value="Hospedaje">Hospedaje</option><option value="Tour">Tour</option><option value="Traslado">Traslado</option><option value="Seguro">Seguro</option><option value="Otro">Otro</option></select></div><div class="form-group"><label>Descripci&oacute;n</label><input type="text" id="adjuntoDescripcion" placeholder="Ej: Vuelo SJO-CUN"></div></div>
-        <div class="adjunto-upload-area" onclick="document.getElementById('adjuntoFileInput').click();">+ Subir imagen</div>
+        <div class="adjunto-upload-area" id="adjuntoDropArea" tabindex="0" onclick="document.getElementById('adjuntoFileInput').click();">+ Subir imagen &middot; <small style="font-size:0.7rem;">o pegue con Ctrl+V</small></div>
         <input type="file" id="adjuntoFileInput" accept="image/*" multiple style="display:none;" onchange="handleAdjuntoUpload(event)">
         <div class="adjuntos-grid" id="adjuntosGrid"></div>
     </div></div>
@@ -1002,6 +1017,23 @@ function cfgGet(){
 // Helper para parsear números tolerando formatos ($, comas, guiones)
 const num=(v)=>parseFloat(String(v||'').replace(/[^0-9.\-]/g,''))||0;
 
+// Evalúa una expresión matemática segura (solo números y +-*/())
+// Acepta "10+5*2", "1299/4", "625+75", etc. Si es solo número, lo devuelve como número.
+function evalExpr(v){
+    if(v==null||v==='')return 0;
+    const s=String(v).trim().replace(/\s/g,'').replace(/,/g,'');
+    if(!s)return 0;
+    // Si es solo número (con signo/decimal), devolver directo
+    if(/^-?\d+(\.\d+)?$/.test(s))return parseFloat(s)||0;
+    // Permitir solo caracteres matemáticos seguros
+    if(!/^[\d+\-*/().]+$/.test(s))return num(s); // fallback seguro: extrae solo números
+    try{
+        // eslint-disable-next-line no-new-func
+        const r=Function('"use strict";return('+s+')')();
+        return typeof r==='number'&&isFinite(r)?r:0;
+    }catch(e){return num(s);}
+}
+
 // Pobla el select de encargados desde config, preservando valor actual
 function populateEncargadosSelect(){
     const sel=document.getElementById('encargado');
@@ -1163,6 +1195,14 @@ function calcDashMetrics(){
     return {totalCot,thisMonthCot,lastMonthCot,cotGrowth,aceptadas,conversion,ventasActivas,ventasCompletadas,ventasPendientes,totalClientes,ingresoEstimado,byMonth,encRanking,byFormato,topDestinos,proximos,ventasPorAtender};
 }
 
+// Abre el checklist de una venta desde el dashboard
+function abrirVentaDesdeDashboard(ventaId){
+    nav('ventas');
+    setTimeout(()=>{
+        openChecklist(ventaId);
+    },80);
+}
+
 function renderDashboard(){
     const m=calcDashMetrics();
     const container=document.getElementById('dashContent');
@@ -1217,7 +1257,7 @@ function renderDashboard(){
     const atenderHtml=m.ventasPorAtender.length?m.ventasPorAtender.map(v=>{
         const pctInt=Math.round(v.pct*100);
         const badge=v.pct<0.3?'danger':(v.pct<0.7?'warn':'ok');
-        return`<div class="dash-list-item"><div class="dli-main"><div class="dli-title">${esc(v.destino)}</div><div class="dli-sub">${esc(v.clienteNombre||'')}${v.encargado?' &bull; '+esc(v.encargado):''}</div></div><span class="dli-badge ${badge}">${v.done}/${v.total} (${pctInt}%)</span></div>`;
+        return`<div class="dash-list-item" style="cursor:pointer;" onclick="abrirVentaDesdeDashboard('${v.id}')" title="Abrir checklist de esta venta"><div class="dli-main"><div class="dli-title">${esc(v.destino)}</div><div class="dli-sub">${esc(v.clienteNombre||'')}${v.encargado?' &bull; '+esc(v.encargado):''}</div></div><span class="dli-badge ${badge}">${v.done}/${v.total} (${pctInt}%)</span></div>`;
     }).join(''):'<div class="dash-empty">Todas las ventas est\u00e1n al d\u00eda &#127881;</div>';
 
     // Trend indicators
@@ -1528,6 +1568,7 @@ document.querySelector(`[data-format="${f}"]`).classList.add('active');
 // Show/hide format-specific sections
 document.getElementById('cruceroSection').style.display=f==='crucero'?'':'none';
 document.getElementById('hospedajeSection').style.display=f!=='crucero'?'':'none';
+document.getElementById('toursSection').style.display=f!=='crucero'?'':'none';
 document.getElementById('itinerarioSection').style.display=f==='europa'?'':'none';
 // Column headers
 document.getElementById('colNombreHeader').textContent=f==='crucero'?'Tipo de Cabina':'Paquete / Hotel';
@@ -1548,7 +1589,7 @@ function addServicioItem(t,ch){const c=document.getElementById('serviciosContain
 // ===== NO INCLUYE =====
 function loadNoIncluye(l){const c=document.getElementById('noIncluyeContainer');c.innerHTML='';l.forEach(s=>addNoIncluyeItem(s));}
 function addNoIncluye(){addNoIncluyeItem('');}
-function addNoIncluyeItem(t){const c=document.getElementById('noIncluyeContainer');const d=document.createElement('div');d.className='service-item';d.draggable=true;d.innerHTML=`<span class="drag-handle" draggable="false">&#9776;</span><input type="text" value="${esc(t)}" placeholder="No incluido..." oninput="updatePreview()"><button class="btn-icon remove" onclick="this.parentElement.remove();updatePreview();">&times;</button>`;c.appendChild(d);updatePreview();}
+function addNoIncluyeItem(t,checked){const c=document.getElementById('noIncluyeContainer');const d=document.createElement('div');d.className='service-item';d.draggable=true;const isChecked=checked!==undefined?checked:true;d.innerHTML=`<span class="drag-handle" draggable="false">&#9776;</span><input type="checkbox" ${isChecked?'checked':''} onchange="updatePreview()"><input type="text" value="${esc(t)}" placeholder="No incluido..." oninput="updatePreview()"><button class="btn-icon remove" onclick="this.parentElement.remove();updatePreview();">&times;</button>`;c.appendChild(d);updatePreview();}
 
 // ===== POLITICAS =====
 function loadPoliticas(l){const c=document.getElementById('politicasContainer');c.innerHTML='';l.forEach(p=>addPoliticaItem(p));}
@@ -1604,8 +1645,9 @@ function addOpcion(data){
 }
 
 function buildCalcHtml(opId,calc){
+    const titEx='Puede escribir operaciones como: 1299/4, 625+75, 300*2, 150-20, etc.';
     return`<td colspan="5"><div class="calc-container">
-        <h5>&#128200; Calculadora de costos &mdash; ingrese los rubros y el total se aplica autom\u00e1ticamente</h5>
+        <h5>&#128200; Calculadora de costos &mdash; acepta f\u00f3rmulas estilo Excel (+ - * /)</h5>
         <table class="calc-table">
             <thead><tr><th></th><th>Adulto</th><th>Ni\u00f1o 11-3</th><th>Ni\u00f1o &lt;3</th></tr></thead>
             <tbody>
@@ -1715,12 +1757,12 @@ function recalcRow(opId,autoFill){
     const reservaFee=cfgGet().fees.reserva_fee||0;
     const results={ad:{},n11:{},n3:{}};
     ['ad','n11','n3'].forEach(col=>{
-        const bol=num(calc.values.boleto[col]);
-        const hot=num(calc.values.hotel[col]);
-        const tou=num(calc.values.tours[col]);
-        const tra=num(calc.values.transp[col]);
-        const fee=num(calc.values.fee[col]);
-        const xgr=num(calc.values.xgrupo[col]);
+        const bol=evalExpr(calc.values.boleto[col]);
+        const hot=evalExpr(calc.values.hotel[col]);
+        const tou=evalExpr(calc.values.tours[col]);
+        const tra=evalExpr(calc.values.transp[col]);
+        const fee=evalExpr(calc.values.fee[col]);
+        const xgr=evalExpr(calc.values.xgrupo[col]);
         const pax=Math.max(1,calc.paxCount[col]||0);
         const sub=bol+hot+tou+tra;
         const xgrPerPax=calc.paxCount[col]>0?(xgr/pax):0;
@@ -1754,6 +1796,13 @@ function recalcRow(opId,autoFill){
 function addHospedaje(hotel,fechaInicio,fechaFin){
     const c=document.getElementById('hospedajeContainer');const d=document.createElement('div');d.className='service-item';d.draggable=true;
     d.innerHTML=`<span class="drag-handle" draggable="false">&#9776;</span><input type="text" class="h-hotel" value="${esc(hotel||'')}" placeholder="Nombre del hotel" style="flex:1;" oninput="updatePreview()"><input type="date" class="h-fi" value="${esc(fechaInicio||'')}" style="width:135px;flex:none;" oninput="updatePreview()" title="Fecha entrada"><input type="date" class="h-ff" value="${esc(fechaFin||'')}" style="width:135px;flex:none;" oninput="updatePreview()" title="Fecha salida"><button class="btn-icon remove" onclick="this.parentElement.remove();updatePreview();">&times;</button>`;
+    c.appendChild(d);updatePreview();
+}
+
+// ===== TOURS INCLUIDOS =====
+function addTour(tour){
+    const c=document.getElementById('toursContainer');const d=document.createElement('div');d.className='service-item';d.draggable=true;
+    d.innerHTML=`<span class="drag-handle" draggable="false">&#9776;</span><input type="text" class="t-tour" value="${esc(tour||'')}" placeholder="Ej: Tour a la Laguna Humantay (incluye gu\u00eda local, desayuno y almuerzo)" oninput="updatePreview()"><button class="btn-icon remove" onclick="this.parentElement.remove();updatePreview();">&times;</button>`;
     c.appendChild(d);updatePreview();
 }
 
@@ -1865,6 +1914,44 @@ function handleWatermarkUpload(e){const f=e.target.files[0];if(!f)return;const r
 
 // ===== ADJUNTOS =====
 function handleAdjuntoUpload(e){const files=e.target.files;if(!files.length)return;const cat=document.getElementById('adjuntoCategoria').value;const desc=document.getElementById('adjuntoDescripcion').value;let loaded=0;Array.from(files).forEach((f,i)=>{const r=new FileReader();r.onload=function(ev){adjuntos.push({id:Date.now()+'_'+i,categoria:cat,descripcion:desc||f.name,dataUrl:ev.target.result});loaded++;if(loaded===files.length){renderAdjuntos();updatePreview();document.getElementById('adjuntoDescripcion').value='';e.target.value='';}};r.readAsDataURL(f);});}
+
+// Pegar imágenes con Ctrl+V desde el portapapeles
+function handleAdjuntoPaste(e){
+    // Solo funciona cuando está el editor visible y no estamos en un input de texto
+    const editorActive=document.getElementById('viewEditor')?.classList.contains('active');
+    if(!editorActive)return;
+    const tag=(e.target&&e.target.tagName)||'';
+    if(tag==='INPUT'&&e.target.type==='text')return; // no interferir con paste en inputs de texto
+    if(tag==='TEXTAREA')return;
+    const items=(e.clipboardData||window.clipboardData)?.items;
+    if(!items)return;
+    const cat=document.getElementById('adjuntoCategoria')?.value||'Otro';
+    const desc=document.getElementById('adjuntoDescripcion')?.value||'';
+    let found=false;
+    for(const it of items){
+        if(it.type&&it.type.indexOf('image')===0){
+            const f=it.getAsFile();
+            if(!f)continue;
+            found=true;
+            const r=new FileReader();
+            r.onload=function(ev){
+                adjuntos.push({
+                    id:Date.now()+'_'+Math.random().toString(36).slice(2,6),
+                    categoria:cat,
+                    descripcion:desc||('Imagen pegada '+new Date().toLocaleString('es-CR')),
+                    dataUrl:ev.target.result
+                });
+                renderAdjuntos();
+                updatePreview();
+                if(desc)document.getElementById('adjuntoDescripcion').value='';
+            };
+            r.readAsDataURL(f);
+        }
+    }
+    if(found)e.preventDefault();
+}
+// Listener global de paste
+document.addEventListener('paste',handleAdjuntoPaste);
 function removeAdjunto(id){adjuntos=adjuntos.filter(a=>a.id!==id);renderAdjuntos();updatePreview();}
 function renderAdjuntos(){const g=document.getElementById('adjuntosGrid');if(!adjuntos.length){g.innerHTML='';return;}g.innerHTML=adjuntos.map(a=>`<div class="adjunto-card"><img src="${a.dataUrl}" alt="${esc(a.descripcion)}"><div class="adjunto-info"><div class="adjunto-cat">${esc(a.categoria)}</div><div class="adjunto-label" title="${esc(a.descripcion)}">${esc(a.descripcion)}</div></div><button class="adjunto-remove" onclick="removeAdjunto('${a.id}')">&times;</button></div>`).join('');}
 
@@ -1924,7 +2011,7 @@ c.addEventListener('drop',function(e){
     setTimeout(updatePreview,50);
 });
 }
-function initAllDrag(){['serviciosContainer','noIncluyeContainer','politicasContainer','hospedajeContainer','itinerarioContainer'].forEach(id=>initDrag(document.getElementById(id)));}
+function initAllDrag(){['serviciosContainer','noIncluyeContainer','politicasContainer','hospedajeContainer','toursContainer','itinerarioContainer'].forEach(id=>initDrag(document.getElementById(id)));}
 
 // ===== ENCABEZADOS =====
 function agregarPais(){const inp=document.getElementById('nuevoPaisInput');const n=inp.value.trim();if(!n){alert('Ingrese el nombre del pa\u00eds.');return;}const enc=getEncabezados();if(enc[n]){alert('Pa\u00eds ya existe.');return;}enc[n]={};saveEncabezados(enc);inp.value='';renderEncabezados();populatePaisSelect();}
@@ -1942,14 +2029,16 @@ function onDestinoSelect(){const ds=document.getElementById('destinoSelect');con
 function formatDateRange(s,e){if(!s||!e)return'';const sd=new Date(s+'T12:00:00'),ed=new Date(e+'T12:00:00');const m=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];if(sd.getMonth()===ed.getMonth()&&sd.getFullYear()===ed.getFullYear())return`${sd.getDate()} al ${ed.getDate()} de ${m[sd.getMonth()]} ${sd.getFullYear()}`;return`${sd.getDate()} de ${m[sd.getMonth()]} al ${ed.getDate()} de ${m[ed.getMonth()]} ${ed.getFullYear()}`;}
 
 // ===== COLLECT FORM DATA =====
-function collectFormData(){const data={formato:currentFormat,tipoCliente,clienteNombre:document.getElementById('clienteNombre').value,clienteTelefono:document.getElementById('clienteTelefono').value,clienteEmail:document.getElementById('clienteEmail').value,empresaNombre:document.getElementById('empresaNombre').value,empresaContacto:document.getElementById('empresaContacto').value,empresaTelefono:document.getElementById('empresaTelefono').value,empresaEmail:document.getElementById('empresaEmail').value,pais:document.getElementById('paisSelect').value,destinoSelect:document.getElementById('destinoSelect').value,destino:document.getElementById('destinoSelect').value&&document.getElementById('destinoSelect').value!=='__custom'?document.getElementById('destinoSelect').value:document.getElementById('destino').value,fechaInicio:document.getElementById('fechaInicio').value,fechaFin:document.getElementById('fechaFin').value,alerta:document.getElementById('alertaDestino').value,infoDestino:document.getElementById('infoDestino').value,moneda:document.getElementById('moneda').value,precioReserva:document.getElementById('precioReserva').value,precioReservaNino:document.getElementById('precioReservaNino').value,precioReservaBebe:document.getElementById('precioReservaBebe').value,razonSocial:document.getElementById('razonSocial').value,cedulaEmpresa:document.getElementById('cedulaEmpresa').value,encargado:document.getElementById('encargado').value,adjuntos:adjuntos.map(a=>({id:a.id,categoria:a.categoria,descripcion:a.descripcion,dataUrl:a.dataUrl}))};
+function collectFormData(){const data={formato:currentFormat,tipoCliente,mostrarCliente:document.getElementById('mostrarClienteEnCot')?.checked!==false,clienteNombre:document.getElementById('clienteNombre').value,clienteTelefono:document.getElementById('clienteTelefono').value,clienteEmail:document.getElementById('clienteEmail').value,empresaNombre:document.getElementById('empresaNombre').value,empresaContacto:document.getElementById('empresaContacto').value,empresaTelefono:document.getElementById('empresaTelefono').value,empresaEmail:document.getElementById('empresaEmail').value,pais:document.getElementById('paisSelect').value,destinoSelect:document.getElementById('destinoSelect').value,destino:document.getElementById('destinoSelect').value&&document.getElementById('destinoSelect').value!=='__custom'?document.getElementById('destinoSelect').value:document.getElementById('destino').value,fechaInicio:document.getElementById('fechaInicio').value,fechaFin:document.getElementById('fechaFin').value,alerta:document.getElementById('alertaDestino').value,infoDestino:document.getElementById('infoDestino').value,moneda:document.getElementById('moneda').value,precioReserva:document.getElementById('precioReserva').value,precioReservaNino:document.getElementById('precioReservaNino').value,precioReservaBebe:document.getElementById('precioReservaBebe').value,razonSocial:document.getElementById('razonSocial').value,cedulaEmpresa:document.getElementById('cedulaEmpresa').value,encargado:document.getElementById('encargado').value,adjuntos:adjuntos.map(a=>({id:a.id,categoria:a.categoria,descripcion:a.descripcion,dataUrl:a.dataUrl}))};
 data.servicios=[];document.querySelectorAll('#serviciosContainer .service-item').forEach(it=>{const cb=it.querySelector('input[type="checkbox"]'),tx=it.querySelector('input[type="text"]').value;if(cb.checked&&tx.trim())data.servicios.push(tx);});
 data.opciones=[];document.querySelectorAll('#opcionesBody tr.opcion-row').forEach(tr=>{const nombre=tr.querySelector('.op-nombre')?.value||'';const adulto=tr.querySelector('.op-adulto')?.value||'';const nino=tr.querySelector('.op-nino')?.value||'';const bebe=tr.querySelector('.op-bebe')?.value||'';if(nombre.trim()){let calc=null;try{calc=JSON.parse(tr.dataset.calc||'null');}catch(e){}data.opciones.push({nombre,adulto,nino,bebe,calc,manualOverride:tr.dataset.manualOverride==='1'});}});
-data.noIncluye=[];document.querySelectorAll('#noIncluyeContainer .service-item').forEach(it=>{const t=it.querySelector('input[type="text"]').value;if(t.trim())data.noIncluye.push(t);});
+data.noIncluye=[];document.querySelectorAll('#noIncluyeContainer .service-item').forEach(it=>{const cb=it.querySelector('input[type="checkbox"]');const t=it.querySelector('input[type="text"]').value;if(t.trim()&&(!cb||cb.checked))data.noIncluye.push(t);});
 data.politicas=[];document.querySelectorAll('#politicasContainer .service-item').forEach(it=>{const t=it.querySelector('textarea').value;if(t.trim())data.politicas.push(t);});
 data.cuentas=[];document.querySelectorAll('#cuentasContainer > div').forEach(div=>{const tipo=div.querySelector('.cuenta-tipo')?.value||'';if(tipo.trim())data.cuentas.push({tipo,numero:div.querySelector('.cuenta-numero')?.value||'',iban:div.querySelector('.cuenta-iban')?.value||'',nota:div.querySelector('.cuenta-nota')?.value||''});});
 // Hospedaje incluido (rango de fechas)
 data.hospedajes=[];document.querySelectorAll('#hospedajeContainer .service-item').forEach(it=>{const hotel=it.querySelector('.h-hotel')?.value||'';const fi=it.querySelector('.h-fi')?.value||'';const ff=it.querySelector('.h-ff')?.value||'';if(hotel.trim())data.hospedajes.push({hotel,fechaInicio:fi,fechaFin:ff});});
+// Tours incluidos
+data.tours=[];document.querySelectorAll('#toursContainer .service-item').forEach(it=>{const tour=it.querySelector('.t-tour')?.value||'';if(tour.trim())data.tours.push(tour);});
 // Itinerario propuesto (tabla)
 data.itinerario=[];document.querySelectorAll('#itinerarioContainer tr').forEach(tr=>{const dia=tr.querySelector('.it-dia')?.value||'';const act=tr.querySelector('.it-act')?.value||'';if(dia.trim()||act.trim())data.itinerario.push({dia,actividad:act});});
 // Crucero
@@ -1970,13 +2059,15 @@ return`<div class="cot-header"><div class="cot-header-content"><div class="cot-h
 
 // ===== UPDATE PREVIEW =====
 function updatePreview(){const d=collectFormData();const fechas=formatDateRange(d.fechaInicio,d.fechaFin);const curr=d.moneda==='USD'?'$':d.moneda==='EUR'?'\u20ac':'\u20a1';const colLabel=d.formato==='crucero'?'Tipo de Cabina':'Paquete';
-let clienteHtml='';if(d.tipoCliente==='persona'&&d.clienteNombre){clienteHtml=`<div class="cot-cliente-box"><p><strong>Cliente:</strong> ${esc(d.clienteNombre)}</p>${d.clienteTelefono?`<p><strong>Tel:</strong> ${esc(d.clienteTelefono)}</p>`:''}${d.clienteEmail?`<p><strong>Email:</strong> ${esc(d.clienteEmail)}</p>`:''}</div>`;}else if(d.tipoCliente==='empresa'&&d.empresaNombre){clienteHtml=`<div class="cot-cliente-box"><p><strong>Empresa:</strong> ${esc(d.empresaNombre)}</p>${d.empresaContacto?`<p><strong>Contacto:</strong> ${esc(d.empresaContacto)}</p>`:''}${d.empresaTelefono?`<p><strong>Tel:</strong> ${esc(d.empresaTelefono)}</p>`:''}${d.empresaEmail?`<p><strong>Email:</strong> ${esc(d.empresaEmail)}</p>`:''}</div>`;}
+let clienteHtml='';if(d.mostrarCliente!==false){if(d.tipoCliente==='persona'&&d.clienteNombre){clienteHtml=`<div class="cot-cliente-box"><p><strong>Cliente:</strong> ${esc(d.clienteNombre)}</p>${d.clienteTelefono?`<p><strong>Tel:</strong> ${esc(d.clienteTelefono)}</p>`:''}${d.clienteEmail?`<p><strong>Email:</strong> ${esc(d.clienteEmail)}</p>`:''}</div>`;}else if(d.tipoCliente==='empresa'&&d.empresaNombre){clienteHtml=`<div class="cot-cliente-box"><p><strong>Empresa:</strong> ${esc(d.empresaNombre)}</p>${d.empresaContacto?`<p><strong>Contacto:</strong> ${esc(d.empresaContacto)}</p>`:''}${d.empresaTelefono?`<p><strong>Tel:</strong> ${esc(d.empresaTelefono)}</p>`:''}${d.empresaEmail?`<p><strong>Email:</strong> ${esc(d.empresaEmail)}</p>`:''}</div>`;}}
 // Crucero info
 let cruceroHtml='';if(d.formato==='crucero'&&(d.lineaCrucero||d.nombreBarco)){
 const pr=(d.puertos||[]).map(p=>`<tr><td>${esc(p.fecha||'')}</td><td>${esc(p.puerto||'')}</td><td>${esc(p.llegada||'-')}</td><td>${esc(p.salida||'-')}</td><td>${esc(p.actividad||'')}</td></tr>`).join('');
 cruceroHtml=`<div class="cot-cruise-info"><h4>Detalle del paquete</h4><div class="cot-cruise-grid">${d.lineaCrucero?`<div class="info-item"><strong>Naviera:</strong> ${esc(d.lineaCrucero)}</div>`:''}${d.nombreBarco?`<div class="info-item"><strong>Barco:</strong> ${esc(d.nombreBarco)}</div>`:''}${d.puertoSalida?`<div class="info-item"><strong>Puerto de salida:</strong> ${esc(d.puertoSalida)}</div>`:''}${d.duracionCrucero?`<div class="info-item"><strong>Fecha de salida:</strong> ${esc(d.duracionCrucero)}</div>`:''}</div></div>${pr?`<div class="cot-section"><h4>ITINERARIO</h4><table class="cruise-itinerary-table"><thead><tr><th>Fecha</th><th>Puerto de escala</th><th>Llegada</th><th>Salida</th><th>Actividad</th></tr></thead><tbody>${pr}</tbody></table></div>`:''}`;}
 // Hospedaje incluido (rango fechas formateado)
 let hospedajeHtml='';if((d.hospedajes||[]).length){hospedajeHtml=`<div class="cot-section"><h4>Hospedaje incluido:</h4>${d.hospedajes.map(h=>{const rango=formatHospedajeRange(h.fechaInicio,h.fechaFin);return`<p style="font-size:0.83rem;margin-bottom:2px;">${esc(h.hotel)}${rango?' '+esc(rango):''}</p>`;}).join('')}</div>`;}
+// Tours incluidos
+let toursHtml='';if((d.tours||[]).length){toursHtml=`<div class="cot-section"><h4>Tours incluidos:</h4><ul class="cot-services-list">${d.tours.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`;}
 // Itinerario propuesto (fechas formateadas)
 let itinerarioHtml='';if((d.itinerario||[]).length){itinerarioHtml=`<div class="cot-section"><h4>Itinerario propuesto</h4><table class="cruise-itinerary-table"><thead><tr><th style="width:80px;">D\u00eda</th><th>Itinerario propuesto</th></tr></thead><tbody>${d.itinerario.map(i=>`<tr><td>${esc(formatFechaCorta(i.dia)||i.dia)}</td><td>${esc(i.actividad)}</td></tr>`).join('')}</tbody></table></div>`;}
 // Plan de pagos y recomendaciones (Crucero)
@@ -1986,7 +2077,7 @@ const wmHtml=watermarkDataUrl?`<div class="cot-watermark"><img src="${watermarkD
 const hoy=new Date();const fechaEmision=hoy.toLocaleDateString('es-CR',{day:'2-digit',month:'long',year:'numeric'});
 const preview=document.getElementById('previewPanel');
 preview.innerHTML=`
-<div class="cot-page">${headerHtml()}${wmHtml}<div class="cot-body">${clienteHtml}<div class="cot-detail-header"><h3>Detalle del paquete</h3><p><strong>Destino:</strong> ${esc(d.destino||'Destino')}</p>${fechas?`<p><strong>Fechas:</strong> ${esc(fechas)}.</p>`:''}</div>${cruceroHtml}${d.servicios.length?`<div class="cot-section"><h4>El paquete incluye:</h4><ul class="cot-services-list">${d.servicios.map(s=>`<li>${esc(s)}</li>`).join('')}</ul></div>`:''}${hospedajeHtml}${d.opciones.length?`<div class="cot-pricing"><div class="cot-pricing-title">Tarifas por persona en ${d.moneda}</div><table class="cot-price-table"><thead><tr><th>${colLabel}</th><th>Precio por Adulto</th><th>Ni\u00f1o 2-11</th><th>Ni\u00f1o 0-23m</th></tr></thead><tbody>${d.opciones.map(o=>`<tr><td>${esc(o.nombre)}</td><td class="price">${o.adulto?curr+o.adulto:'-'}</td><td class="price">${o.nino&&o.nino!=='-'?curr+o.nino:'-'}</td><td class="price">${o.bebe&&o.bebe!=='-'?curr+o.bebe:'-'}</td></tr>`).join('')}${d.precioReserva?`<tr style="background:rgba(232,148,26,0.08);"><td><strong>Reserva</strong></td><td class="price">${curr}${d.precioReserva}</td><td class="price">${d.precioReservaNino?curr+d.precioReservaNino:'-'}</td><td class="price">${d.precioReservaBebe?curr+d.precioReservaBebe:'-'}</td></tr>`:''}</tbody></table><p class="cot-price-note">***Precios en ${d.moneda} por persona**</p></div>`:''}${d.alerta?`<div class="cot-alert">${esc(d.alerta)}</div>`:''}${d.infoDestino?`<div class="cot-dest-info"><p>${esc(d.infoDestino)}</p></div>`:''}${planPagosHtml}${recomHtml}</div></div>
+<div class="cot-page">${headerHtml()}${wmHtml}<div class="cot-body">${clienteHtml}<div class="cot-detail-header"><h3>Detalle del paquete</h3><p><strong>Destino:</strong> ${esc(d.destino||'Destino')}</p>${fechas?`<p><strong>Fechas:</strong> ${esc(fechas)}.</p>`:''}</div>${cruceroHtml}${d.servicios.length?`<div class="cot-section"><h4>El paquete incluye:</h4><ul class="cot-services-list">${d.servicios.map(s=>`<li>${esc(s)}</li>`).join('')}</ul></div>`:''}${toursHtml}${hospedajeHtml}${d.opciones.length?`<div class="cot-pricing"><div class="cot-pricing-title">Tarifas por persona en ${d.moneda}</div><table class="cot-price-table"><thead><tr><th>${colLabel}</th><th>Precio por Adulto</th><th>Ni\u00f1o 2-11</th><th>Ni\u00f1o 0-23m</th></tr></thead><tbody>${d.opciones.map(o=>`<tr><td>${esc(o.nombre)}</td><td class="price">${o.adulto?curr+o.adulto:'-'}</td><td class="price">${o.nino&&o.nino!=='-'?curr+o.nino:'-'}</td><td class="price">${o.bebe&&o.bebe!=='-'?curr+o.bebe:'-'}</td></tr>`).join('')}${d.precioReserva?`<tr style="background:rgba(232,148,26,0.08);"><td><strong>Reserva</strong></td><td class="price">${curr}${d.precioReserva}</td><td class="price">${d.precioReservaNino?curr+d.precioReservaNino:'-'}</td><td class="price">${d.precioReservaBebe?curr+d.precioReservaBebe:'-'}</td></tr>`:''}</tbody></table><p class="cot-price-note">***Precios en ${d.moneda} por persona**</p></div>`:''}${d.alerta?`<div class="cot-alert">${esc(d.alerta)}</div>`:''}${d.infoDestino?`<div class="cot-dest-info"><p>${esc(d.infoDestino)}</p></div>`:''}${planPagosHtml}${recomHtml}</div></div>
 <div class="cot-page">${headerHtml()}${wmHtml}<div class="cot-body">${itinerarioHtml}${d.noIncluye.length?`<div class="cot-section cot-no-incluye"><h4>${d.formato==='crucero'?'El Crucero No Incluye:':'El paquete no incluye:'}</h4>${d.noIncluye.map(s=>`<p>${esc(s)}</p>`).join('')}</div>`:''}${d.politicas.length?`<div class="cot-section cot-politicas"><h4>Pol\u00edticas de viaje:</h4><ol>${d.politicas.map(p=>`<li>${esc(p)}</li>`).join('')}</ol></div>`:''}</div></div>
 <div class="cot-page">${headerHtml()}${wmHtml}<div class="cot-body"><div class="cot-bank-section"><h4>Cuentas autorizadas para pagos</h4><p class="company-legal">${esc(d.razonSocial)}</p><p class="cedula">C\u00e9dula: ${esc(d.cedulaEmpresa)}</p><div class="cot-bank-details">${d.cuentas.map(c=>`<div class="cot-bank-item"><p class="bank-name">${esc(c.tipo)}</p><p>${esc(c.numero)}</p>${c.iban?`<p>IBAN: ${esc(c.iban)}</p>`:''}${c.nota?`<p class="note">${esc(c.nota)}</p>`:''}</div>`).join('')}</div></div><div class="cot-footer-slogan">\u00a1Nuestro deseo es hacer de tu viaje la mejor experiencia!</div><div class="cot-fecha-emision">${d.encargado?`<p style="margin-bottom:3px;"><strong>Elaborada por:</strong> ${esc(d.encargado)}</p>`:''}<p>Fecha de emisi\u00f3n: ${fechaEmision}</p></div></div></div>
 ${adjuntos.length?`<div class="cot-page cot-adjuntos-page" style="min-height:auto;"><div class="internal-badge">USO INTERNO - NO ENVIAR AL CLIENTE</div><div class="cot-adjuntos-body"><h3>Adjuntos de apoyo</h3><div class="adjuntos-preview-grid">${adjuntos.map(a=>`<div class="adjunto-preview-card"><img src="${a.dataUrl}" alt="${esc(a.descripcion)}" onclick="openImgLightbox('${a.id}','${esc(a.categoria)}','${esc(a.descripcion).replace(/'/g,"\\'")}')"><div class="adjunto-preview-info"><div class="adjunto-preview-cat">${esc(a.categoria)}</div><div class="adjunto-preview-label">${esc(a.descripcion)}</div></div></div>`).join('')}</div></div></div>`:''}`;}
@@ -2034,8 +2125,9 @@ function guardarCotizacion(){
     alert('Cotizaci\u00f3n guardada.'+(ventaIdx>=0?' La venta vinculada tambi\u00e9n fue actualizada.':''));
 }
 
-function cargarCotizacion(id){const hist=getHistorial();const entry=hist.find(h=>h.id===id);if(!entry)return;const d=entry.data;editingId=id;
+function cargarCotizacion(id,readOnly){const hist=getHistorial();const entry=hist.find(h=>h.id===id);if(!entry)return;const d=entry.data;editingId=readOnly?null:id;
 switchFormat(d.formato||'america');switchTipoCliente(d.tipoCliente||'persona');
+document.getElementById('mostrarClienteEnCot').checked=d.mostrarCliente!==false;
 document.getElementById('clienteNombre').value=d.clienteNombre||'';document.getElementById('clienteTelefono').value=d.clienteTelefono||'';document.getElementById('clienteEmail').value=d.clienteEmail||'';document.getElementById('empresaNombre').value=d.empresaNombre||'';document.getElementById('empresaContacto').value=d.empresaContacto||'';document.getElementById('empresaTelefono').value=d.empresaTelefono||'';document.getElementById('empresaEmail').value=d.empresaEmail||'';
 populatePaisSelect();if(d.pais){document.getElementById('paisSelect').value=d.pais;onPaisChange();if(d.destinoSelect&&d.destinoSelect!=='__custom'){document.getElementById('destinoSelect').value=d.destinoSelect;onDestinoSelect();}else{document.getElementById('destinoSelect').value='__custom';onDestinoSelect();document.getElementById('destino').value=d.destino||'';}}else{document.getElementById('destino').style.display='';document.getElementById('destinoSelect').style.display='none';document.getElementById('destino').value=d.destino||'';selectedHeaderImg=null;}
 document.getElementById('fechaInicio').value=d.fechaInicio||'';document.getElementById('fechaFin').value=d.fechaFin||'';document.getElementById('alertaDestino').value=d.alerta||'';document.getElementById('infoDestino').value=d.infoDestino||'';document.getElementById('moneda').value=d.moneda||'USD';document.getElementById('precioReserva').value=d.precioReserva||'';document.getElementById('precioReservaNino').value=d.precioReservaNino||'';document.getElementById('precioReservaBebe').value=d.precioReservaBebe||'';document.getElementById('razonSocial').value=d.razonSocial||'Deseos Viajeros MYX SRL';document.getElementById('cedulaEmpresa').value=d.cedulaEmpresa||'3-102-862093';document.getElementById('encargado').value=d.encargado||'';
@@ -2052,12 +2144,48 @@ loadNoIncluye(d.noIncluye||cfgGet().noIncluye[d.formato||'america']);loadPolitic
 // Hospedaje (rango fechas, compatibilidad con formato viejo .fechas)
 const hc=document.getElementById('hospedajeContainer');hc.innerHTML='';
 (d.hospedajes||[]).forEach(h=>addHospedaje(h.hotel,h.fechaInicio||'',h.fechaFin||''));
+// Tours incluidos
+const tc=document.getElementById('toursContainer');tc.innerHTML='';
+(d.tours||[]).forEach(t=>addTour(t));
 // Itinerario
 const ic=document.getElementById('itinerarioContainer');ic.innerHTML='';
 (d.itinerario||[]).forEach(i=>{const dia=i.dia&&/^\d{4}-\d{2}-\d{2}$/.test(i.dia)?i.dia:(parseFechaFlexible(i.dia)||'');addItinerario(dia,i.actividad);});
 // Crucero
 if(d.formato==='crucero'){document.getElementById('lineaCrucero').value=d.lineaCrucero||'';document.getElementById('nombreBarco').value=d.nombreBarco||'';document.getElementById('puertoSalida').value=d.puertoSalida||'';document.getElementById('duracionCrucero').value=d.duracionCrucero||'';document.getElementById('planPagos').value=d.planPagos||'';document.getElementById('cruceroRecomendaciones').value=d.cruceroRecomendaciones||'';const pc=document.getElementById('puertosContainer');pc.innerHTML='';(d.puertos||[]).forEach(p=>addPuerto(p.fecha,p.puerto,p.llegada,p.salida,p.actividad));}
-nav('editor');updatePreview();}
+nav('editor');updatePreview();setEditorReadOnly(!!readOnly);}
+
+// Aplica modo solo-lectura al form panel (deshabilita inputs + esconde botones de edición)
+function setEditorReadOnly(readOnly){
+    const fp=document.querySelector('.form-panel');
+    if(!fp)return;
+    fp.querySelectorAll('input,select,textarea,button').forEach(el=>{
+        // No deshabilitar los botones de "colapsar sección" para que pueda navegar
+        if(el.closest('.form-section-header'))return;
+        if(readOnly){
+            el.setAttribute('data-ro-disabled','1');
+            el.disabled=true;
+        }else if(el.getAttribute('data-ro-disabled')==='1'){
+            el.disabled=false;
+            el.removeAttribute('data-ro-disabled');
+        }
+    });
+    // Ocultar botón guardar en read-only
+    const btnGuardar=document.querySelector('.view-editor button.btn-success');
+    if(btnGuardar)btnGuardar.style.display=readOnly?'none':'';
+    // Banner en top del form-panel
+    let banner=document.getElementById('readOnlyBanner');
+    if(readOnly){
+        if(!banner){
+            banner=document.createElement('div');
+            banner.id='readOnlyBanner';
+            banner.style.cssText='background:#fff3cd;border:1px solid #ffd966;color:#856404;padding:8px 12px;border-radius:6px;margin-bottom:12px;font-size:0.8rem;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:8px;';
+            banner.innerHTML='&#128065; Modo solo lectura <button class="btn btn-sm btn-primary" onclick="setEditorReadOnly(false);document.getElementById(\'readOnlyBanner\').remove();" style="font-size:0.7rem;">Habilitar edici&oacute;n</button>';
+            fp.insertBefore(banner,fp.firstChild);
+        }
+    }else if(banner){
+        banner.remove();
+    }
+}
 
 function toggleAceptada(id){const hist=getHistorial();const entry=hist.find(h=>h.id===id);if(!entry)return;if(entry.aceptada){if(!confirm('\u00bfDesmarcar esta cotizaci\u00f3n como aceptada? Se eliminar\u00e1 la venta asociada.'))return;entry.aceptada=false;const ventas=getVentas().filter(v=>v.cotizacionId!==id);saveVentas(ventas);}else{entry.aceptada=true;crearVenta(entry);}saveHistorial(hist);renderHistorial();updateBadges();}
 
@@ -2079,7 +2207,7 @@ if(curE&&encList.includes(curE))encSel.value=curE;
 const filtered=hist.filter(h=>{const d=h.data;const text=[d.destino,d.clienteNombre,d.empresaNombre,d.empresaContacto,d.formato,d.encargado].join(' ').toLowerCase();const matchSearch=!search||text.includes(search);const matchFilter=!filterA||(filterA==='aceptada'&&h.aceptada)||(filterA==='pendiente'&&!h.aceptada);const matchEnc=!filterE||(d.encargado===filterE);return matchSearch&&matchFilter&&matchEnc;});
 if(!filtered.length){grid.innerHTML=`<div class="grid-empty"><h3>${search||filterA||filterE?'Sin resultados':'Sin cotizaciones'}</h3><p>Cree una cotizaci\u00f3n y gu\u00e1rdela.</p></div>`;return;}
 grid.innerHTML=filtered.map(h=>{const d=h.data;const cl=d.tipoCliente==='empresa'?(d.empresaNombre||'Sin empresa'):(d.clienteNombre||'Sin nombre');const tl=d.tipoCliente==='empresa'?'Empresa':'Persona';const tc=d.tipoCliente==='empresa'?'empresa':'persona';const fe=new Date(h.fecha).toLocaleDateString('es-CR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});const fl=(d.formato||'america')==='america'?'Am\u00e9rica':(d.formato==='europa'?'Europa/Asia':'Crucero');
-return`<div class="hist-card${h.aceptada?' aceptada':''}"><div style="display:flex;justify-content:space-between;align-items:start;"><div class="hist-destino">${esc(d.destino||'Sin destino')}</div><div style="display:flex;gap:4px;align-items:center;"><span class="hist-formato">${fl}</span>${h.aceptada?'<span class="badge-aceptada">ACEPTADA</span>':''}</div></div><div class="hist-cliente"><span class="hist-tipo ${tc}">${tl}</span> ${esc(cl)}</div>${d.encargado?`<div class="hist-fecha" style="color:var(--primary-dark);font-weight:600;">Encargado: ${esc(d.encargado)}</div>`:''}${d.fechaInicio?`<div class="hist-fecha">Viaje: ${formatDateRange(d.fechaInicio,d.fechaFin)}</div>`:''}<div class="hist-fecha">Creada: ${fe}</div><div class="hist-card-actions"><button class="btn btn-sm btn-primary" onclick="cargarCotizacion('${h.id}')">Editar</button><button class="btn btn-sm btn-warning" onclick="duplicarCotizacion('${h.id}')">Duplicar</button><button class="btn btn-sm ${h.aceptada?'btn-ghost':'btn-success'}" onclick="toggleAceptada('${h.id}')">${h.aceptada?'Desmarcar':'Aceptada'}</button><button class="btn btn-sm btn-danger" onclick="eliminarCotizacion('${h.id}')">Eliminar</button></div></div>`;}).join('');}
+return`<div class="hist-card${h.aceptada?' aceptada':''}"><div style="display:flex;justify-content:space-between;align-items:start;"><div class="hist-destino">${esc(d.destino||'Sin destino')}</div><div style="display:flex;gap:4px;align-items:center;"><span class="hist-formato">${fl}</span>${h.aceptada?'<span class="badge-aceptada">ACEPTADA</span>':''}</div></div><div class="hist-cliente"><span class="hist-tipo ${tc}">${tl}</span> ${esc(cl)}</div>${d.encargado?`<div class="hist-fecha" style="color:var(--primary-dark);font-weight:600;">Encargado: ${esc(d.encargado)}</div>`:''}${d.fechaInicio?`<div class="hist-fecha">Viaje: ${formatDateRange(d.fechaInicio,d.fechaFin)}</div>`:''}<div class="hist-fecha">Creada: ${fe}</div><div class="hist-card-actions"><button class="btn btn-sm btn-ghost" onclick="cargarCotizacion('${h.id}',true)" title="Solo visualizar">&#128065; Ver</button><button class="btn btn-sm btn-primary" onclick="cargarCotizacion('${h.id}')">Editar</button><button class="btn btn-sm btn-warning" onclick="duplicarCotizacion('${h.id}')">Duplicar</button><button class="btn btn-sm ${h.aceptada?'btn-ghost':'btn-success'}" onclick="toggleAceptada('${h.id}')">${h.aceptada?'Desmarcar':'Aceptada'}</button><button class="btn btn-sm btn-danger" onclick="eliminarCotizacion('${h.id}')">Eliminar</button></div></div>`;}).join('');}
 
 function duplicarCotizacion(id){const hist=getHistorial();const e=hist.find(h=>h.id===id);if(!e)return;const copy=JSON.parse(JSON.stringify(e));copy.id=Date.now().toString();copy.fecha=new Date().toISOString();copy.data.destino+=' (copia)';copy.aceptada=false;hist.unshift(copy);saveHistorial(hist);renderHistorial();updateBadges();}
 function eliminarCotizacion(id){if(!confirm('\u00bfEliminar cotizaci\u00f3n?'))return;const hist=getHistorial().filter(h=>h.id!==id);saveHistorial(hist);const ventas=getVentas().filter(v=>v.cotizacionId!==id);saveVentas(ventas);renderHistorial();updateBadges();}
@@ -2464,9 +2592,10 @@ function eliminarCliente(id){if(!confirm('\u00bfEliminar este cliente?'))return;
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 // ===== RESET =====
-function resetForm(){if(!confirm('\u00bfLimpiar todos los campos?'))return;editingId=null;selectedHeaderImg=null;adjuntos=[];renderAdjuntos();
+function resetForm(){if(!confirm('\u00bfLimpiar todos los campos?'))return;editingId=null;selectedHeaderImg=null;adjuntos=[];renderAdjuntos();setEditorReadOnly(false);
 ['destino','fechaInicio','fechaFin','alertaDestino','infoDestino','precioReserva','precioReservaNino','precioReservaBebe','clienteNombre','clienteTelefono','clienteEmail','empresaNombre','empresaContacto','empresaTelefono','empresaEmail','lineaCrucero','nombreBarco','puertoSalida','duracionCrucero','planPagos','cruceroRecomendaciones'].forEach(id=>{document.getElementById(id).value='';});
 document.getElementById('hospedajeContainer').innerHTML='';
+document.getElementById('toursContainer').innerHTML='';
 document.getElementById('itinerarioContainer').innerHTML='';
 document.getElementById('paisSelect').value='';document.getElementById('encargado').value='';document.getElementById('destinoPreviewImg').classList.remove('visible');onPaisChange();document.getElementById('opcionesBody').innerHTML='';document.getElementById('puertosContainer').innerHTML='';switchTipoCliente('persona');switchFormat(currentFormat);addOpcion();updatePreview();}
 
