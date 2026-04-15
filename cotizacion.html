@@ -2101,7 +2101,7 @@ function renderPagosTable(){
     }
     const m=v.cobranza.moneda||'USD';
     const sorted=[...v.cobranza.pagos].sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
-    tbody.innerHTML=sorted.map(p=>`<tr><td>${esc(p.fecha||'')}</td><td><strong>${fmtMoney(p.monto,m)}</strong></td><td>${esc(p.metodo||'')}</td><td>${esc(p.referencia||'')}</td><td>${esc(p.nota||'')}</td><td style="white-space:nowrap;"><button class="btn btn-sm btn-accent" style="padding:3px 8px;font-size:0.7rem;margin-right:3px;" onclick="generarReciboPago('${p.id}')" title="Generar recibo de este pago">&#129534; Recibo</button><button class="btn-icon remove" onclick="removePago('${p.id}')" title="Eliminar">&times;</button></td></tr>`).join('');
+    tbody.innerHTML=sorted.map(p=>`<tr><td>${esc(p.fecha||'')}</td><td><strong>${fmtMoney(p.monto,m)}</strong></td><td>${esc(p.metodo||'')}</td><td>${esc(p.referencia||'')}</td><td>${esc(p.nota||'')}</td><td style="white-space:nowrap;"><div style="display:inline-flex;gap:4px;align-items:center;"><button class="btn btn-sm btn-accent" style="padding:4px 10px;font-size:0.7rem;white-space:nowrap;display:inline-flex;align-items:center;gap:2px;" onclick="generarReciboPago('${p.id}')" title="Generar recibo de este pago">&#129534; Recibo</button><button class="btn-icon remove" style="display:inline-flex;" onclick="removePago('${p.id}')" title="Eliminar">&times;</button></div></td></tr>`).join('');
 }
 
 function togglePagoForm(){
