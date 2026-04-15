@@ -1,0 +1,24 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude
+.claude/
+plans/
+
+# Archivos de trabajo internos (no son parte del producto)
+*.docx
+*.xlsx
+*.pdf
+
+# Temporales
+*.tmp
+*.bak
+*.log

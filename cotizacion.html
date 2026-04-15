@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deseos Viajeros - Sistema de Cotizaciones</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Open+Sans:wght@300;400;600;700&family=Dancing+Script:wght@400;700&display=swap');
+:root{--primary:#429D9D;--primary-dark:#027584;--primary-light:#c5efef;--primary-vivid:#00D6D4;--accent:#e8941a;--accent-dark:#d4830f;--accent-light:#fef3e2;--text:#333;--text-light:#666;--bg:#f5f7fa;--white:#fff;--border:#dde1e7;--danger:#e74c3c;--success:#27ae60;--sidebar-bg:linear-gradient(180deg,#027584 0%,#01545f 100%)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden}
+
+/* ===== LAYOUT ===== */
+.app-layout{display:flex;height:100vh}
+.app-sidebar{width:220px;min-width:220px;background:var(--sidebar-bg);color:white;display:flex;flex-direction:column;overflow-y:auto;z-index:50}
+.app-sidebar::-webkit-scrollbar{width:4px}
+.app-sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:2px}
+.sidebar-logo{padding:18px 18px 14px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.sidebar-logo h2{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700}
+.sidebar-logo p{font-family:'Dancing Script',cursive;font-size:0.85rem;opacity:0.7;margin-top:2px}
+.sidebar-section{padding:12px 0 4px}
+.sidebar-section-label{padding:0 18px 6px;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.4)}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;transition:all 0.15s;color:rgba(255,255,255,0.7);font-size:0.82rem;font-weight:600;border-left:3px solid transparent}
+.sidebar-item:hover{background:rgba(255,255,255,0.05);color:white}
+.sidebar-item.active{background:rgba(255,255,255,0.1);color:white;border-left-color:var(--primary-vivid)}
+.sidebar-item .si-icon{font-size:1rem;width:22px;text-align:center}
+.sidebar-item .si-badge{margin-left:auto;background:var(--accent);color:white;font-size:0.6rem;padding:2px 7px;border-radius:8px;font-weight:700}
+.app-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* ===== HEADER ===== */
+.app-header{background:linear-gradient(135deg,var(--primary-dark),var(--primary));color:white;padding:10px 25px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
+.app-header h1{font-family:'Playfair Display',serif;font-size:1.2rem}
+.header-actions{display:flex;gap:8px}
+
+/* ===== BUTTONS ===== */
+.btn{padding:8px 16px;border:none;border-radius:6px;font-family:'Open Sans',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:5px}
+.btn:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,0.15)}
+.btn-primary{background:var(--primary);color:white}.btn-accent{background:var(--accent);color:white}
+.btn-outline{background:transparent;color:white;border:2px solid rgba(255,255,255,0.5)}
+.btn-outline:hover{border-color:white;background:rgba(255,255,255,0.1)}
+.btn-danger{background:var(--danger);color:white}.btn-success{background:var(--success);color:white}
+.btn-sm{padding:5px 10px;font-size:0.75rem}.btn-warning{background:#f39c12;color:white}
+.btn-ghost{background:transparent;color:var(--primary);border:1px solid var(--border)}.btn-ghost:hover{background:var(--bg)}
+
+/* ===== VIEWS ===== */
+.main-views{flex:1;overflow:hidden;position:relative}
+.app-view{display:none;height:100%;overflow-y:auto}
+.app-view.active{display:flex}
+.view-editor{overflow:hidden}
+.view-list{flex-direction:column;padding:25px}
+
+/* ===== FORM PANEL ===== */
+.form-panel{width:480px;min-width:480px;background:var(--white);overflow-y:auto;border-right:1px solid var(--border);padding:15px}
+.form-panel::-webkit-scrollbar{width:6px}.form-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.form-section{margin-bottom:12px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.form-section-header{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;padding:8px 14px;font-weight:600;font-size:0.82rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none}
+.form-section-header:hover{filter:brightness(1.1)}
+.form-section-header .toggle{transition:transform 0.2s;font-size:0.65rem}
+.form-section-header.collapsed .toggle{transform:rotate(-90deg)}
+.form-section-body{padding:12px}.form-section-body.collapsed{display:none}
+.form-group{margin-bottom:8px}
+.form-group label{display:block;font-weight:600;font-size:0.72rem;color:var(--text-light);margin-bottom:2px;text-transform:uppercase;letter-spacing:0.5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-family:'Open Sans',sans-serif;font-size:0.82rem;transition:border-color 0.2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(10,126,140,0.1)}
+.form-group textarea{resize:vertical;min-height:45px}
+.form-row{display:flex;gap:8px}.form-row .form-group{flex:1}
+
+/* ===== FORMAT TABS ===== */
+.format-tabs{display:flex;gap:4px;margin-bottom:12px;background:var(--bg);padding:3px;border-radius:8px}
+.format-tab{flex:1;padding:7px;text-align:center;border:none;background:transparent;border-radius:6px;font-family:'Open Sans',sans-serif;font-size:0.78rem;font-weight:600;color:var(--text-light);cursor:pointer;transition:all 0.2s}
+.format-tab:hover{color:var(--primary)}
+.format-tab.active{background:var(--primary);color:white;box-shadow:0 2px 8px rgba(10,126,140,0.3)}
+
+/* ===== OPTIONS TABLE ===== */
+.options-table{width:100%;border-collapse:collapse;margin-top:6px}
+.options-table th{background:var(--bg);padding:4px 5px;font-size:0.7rem;text-align:left;border:1px solid var(--border)}
+.options-table td{padding:3px 4px;border:1px solid var(--border)}
+.options-table input{border:1px solid transparent;padding:3px 4px;font-size:0.8rem;width:100%;background:transparent}
+.options-table input:focus{border-color:var(--primary);border-radius:4px;background:white;outline:none}
+.options-table .price-input{text-align:right;width:70px}
+.row-actions{display:flex;gap:3px}
+.btn-icon{width:24px;height:24px;border:none;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;transition:all 0.2s}
+.btn-icon.add{background:var(--success);color:white}.btn-icon.remove{background:var(--danger);color:white}
+.btn-icon:hover{filter:brightness(1.15)}
+
+/* ===== SERVICES LIST ===== */
+.service-item{display:flex;align-items:center;gap:5px;margin-bottom:4px;border-radius:4px;padding:2px 0;transition:background 0.15s}
+.service-item input[type="checkbox"]{width:auto;accent-color:var(--primary)}
+.service-item input[type="text"]{flex:1;padding:3px 5px;font-size:0.8rem}
+.service-item .btn-icon{flex-shrink:0}
+.drag-handle{cursor:grab;color:#aab;font-size:1.1rem;user-select:none;flex-shrink:0;padding:4px 6px;line-height:1;border-radius:3px;transition:color 0.15s}
+.drag-handle:hover{color:var(--primary)}
+.drag-handle:active{cursor:grabbing;color:var(--primary-dark)}
+.service-item.dragging{opacity:0.3;background:var(--primary-light);border-radius:4px}
+.service-item.drag-over{border-top:2px solid var(--accent);margin-top:-2px;padding-top:4px}
+.service-item[draggable="true"]:hover .drag-handle{color:var(--primary)}
+
+/* ===== PREVIEW PANEL ===== */
+.preview-panel{flex:1;background:#e0e5ec;overflow-y:auto;padding:20px;display:flex;flex-direction:column;align-items:center;gap:20px}
+
+/* ===== COT PDF PAGES ===== */
+.cot-page{width:816px;min-height:1056px;background:white;box-shadow:0 4px 20px rgba(0,0,0,0.15);position:relative;overflow:hidden;flex-shrink:0}
+.cot-header{position:relative;height:170px;background:linear-gradient(135deg,#429D9D 0%,#027584 40%,#01545f 100%);overflow:hidden}
+.cot-header::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23ffffff" fill-opacity="0.05" d="M0,96L48,112C96,128,192,160,288,186.7C384,213,480,235,576,213.3C672,192,768,128,864,128C960,128,1056,192,1152,208C1248,224,1344,192,1392,176L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom;background-size:cover}
+.cot-header.has-image{background:none!important}
+.cot-header.has-image::before{display:none!important}
+.cot-header .header-bg-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:fill;z-index:0}
+.cot-header.has-image .cot-header-content{text-shadow:0 2px 6px rgba(0,0,0,0.6)}
+.cot-header-content{position:relative;z-index:1;padding:16px 30px;display:flex;justify-content:space-between;align-items:flex-start;height:100%}
+.cot-header-left h2{font-family:'Playfair Display',serif;font-size:1.9rem;color:white;margin-bottom:5px}
+.cot-header-left .company-info{color:rgba(255,255,255,0.85);font-size:0.78rem;line-height:1.4}
+.cot-header-left .badge{display:inline-block;background:var(--accent);color:white;padding:2px 9px;border-radius:3px;font-size:0.68rem;font-weight:700;margin-top:3px}
+.cot-header-right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.cot-header-right .slogan{font-family:'Dancing Script',cursive;font-size:1.7rem;color:white;line-height:1.2}
+.cot-logo-placeholder{width:80px;height:80px;border:2px dashed rgba(255,255,255,0.4);border-radius:50%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.5);font-size:0.6rem;text-align:center;padding:6px}
+.cot-logo-placeholder img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.cot-watermark{position:absolute;pointer-events:none;z-index:0;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;height:500px;opacity:0.07}
+.cot-watermark img{width:100%;height:100%;object-fit:contain}
+.cot-body{padding:22px 30px;position:relative;z-index:1}
+.cot-cliente-box{background:rgba(10,126,140,0.05);border-radius:8px;padding:10px 16px;margin-bottom:18px;border-left:4px solid var(--primary)}
+.cot-cliente-box p{font-size:0.85rem;line-height:1.5}.cot-cliente-box strong{color:var(--primary-dark)}
+.cot-detail-header{border-bottom:3px solid var(--primary);padding-bottom:10px;margin-bottom:16px}
+.cot-detail-header h3{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--primary-dark);font-style:italic;margin-bottom:5px}
+.cot-detail-header p{font-size:0.88rem;color:var(--text);line-height:1.5}.cot-detail-header strong{color:var(--primary-dark)}
+.cot-section{margin-bottom:18px}
+.cot-section h4{font-family:'Playfair Display',serif;font-size:0.95rem;color:var(--primary-dark);font-style:italic;margin-bottom:7px;font-weight:700}
+.cot-services-list{list-style:none;padding:0}
+.cot-services-list li{padding:3px 0 3px 16px;position:relative;font-size:0.83rem;line-height:1.4}
+.cot-services-list li::before{content:'';width:5px;height:5px;background:var(--primary);border-radius:50%;position:absolute;left:0;top:9px}
+.cot-pricing{margin-bottom:18px}
+.cot-pricing-title{text-align:center;font-weight:700;color:var(--primary-dark);font-size:0.92rem;margin-bottom:8px;font-family:'Playfair Display',serif}
+.cot-price-table{width:100%;border-collapse:collapse;margin-bottom:6px}
+.cot-price-table thead th{background:var(--primary);color:white;padding:8px;font-size:0.75rem;font-weight:600;text-align:center;border:1px solid var(--primary-dark)}
+.cot-price-table tbody td{padding:8px;border:1px solid var(--border);font-size:0.83rem;text-align:center}
+.cot-price-table tbody tr:nth-child(even){background:rgba(10,126,140,0.04)}
+.cot-price-table tbody td:first-child{text-align:left;font-weight:600}
+.cot-price-table .price{font-weight:700;color:var(--primary-dark)}
+.cot-price-note{text-align:center;font-size:0.75rem;font-weight:700;font-style:italic;color:var(--text);margin-top:5px}
+.cot-alert{background:var(--accent-light);border-left:4px solid var(--accent);padding:9px 12px;font-size:0.8rem;font-weight:600;margin-bottom:18px;border-radius:0 6px 6px 0}
+.cot-no-incluye p{font-size:0.8rem;line-height:1.4;color:var(--text-light)}
+.cot-politicas ol{padding-left:16px}
+.cot-politicas li{font-size:0.75rem;line-height:1.35;margin-bottom:4px}
+.cot-politicas li:first-child{font-weight:700;font-size:0.82rem}
+.cot-bank-section{text-align:center;margin-bottom:22px}
+.cot-bank-section h4{font-family:'Playfair Display',serif;font-size:1rem;color:var(--primary-dark);font-weight:700;margin-bottom:3px}
+.cot-bank-section .company-legal{font-size:0.82rem;font-weight:600}
+.cot-bank-section .cedula{font-size:0.8rem;font-weight:600;margin-bottom:10px}
+.cot-bank-details{text-align:left;max-width:460px;margin:0 auto}
+.cot-bank-item{margin-bottom:10px;padding:9px 12px;background:rgba(10,126,140,0.04);border-radius:6px;border:1px solid rgba(10,126,140,0.1)}
+.cot-bank-item .bank-name{font-weight:700;color:var(--primary-dark);font-size:0.82rem}
+.cot-bank-item p{font-size:0.8rem;line-height:1.35}
+.cot-bank-item .note{font-size:0.75rem;color:var(--text-light);font-style:italic}
+.cot-footer-slogan{text-align:center;font-family:'Dancing Script',cursive;font-size:1.05rem;color:var(--primary);font-style:italic;margin-top:22px;padding-top:16px;border-top:2px solid var(--primary-light)}
+.cot-fecha-emision{text-align:center;font-size:0.8rem;color:var(--text-light);margin-top:12px}
+.cot-cruise-info{background:rgba(10,126,140,0.05);border-radius:8px;padding:12px;margin-bottom:16px}
+.cot-cruise-info h4{font-family:'Playfair Display',serif;color:var(--primary-dark);margin-bottom:7px}
+.cot-cruise-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.cot-cruise-grid .info-item{font-size:0.83rem}.cot-cruise-grid .info-item strong{color:var(--primary-dark)}
+.cruise-itinerary-table{width:100%;border-collapse:collapse;margin-top:8px}
+.cruise-itinerary-table th{background:var(--primary);color:white;padding:6px;font-size:0.75rem;text-align:left}
+.cruise-itinerary-table td{padding:5px 6px;border:1px solid var(--border);font-size:0.8rem}
+.cruise-itinerary-table tr:nth-child(even){background:rgba(10,126,140,0.03)}
+.cot-dest-info{background:rgba(232,148,26,0.08);border-left:4px solid var(--accent);padding:9px 12px;margin-bottom:16px;border-radius:0 6px 6px 0}
+.cot-dest-info p{font-size:0.8rem;line-height:1.35}
+
+/* ===== ENCABEZADOS ===== */
+.enc-add-pais{display:flex;gap:8px;margin-bottom:18px}
+.enc-add-pais input{flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.88rem}
+.enc-add-pais input:focus{outline:none;border-color:var(--primary)}
+.enc-pais-section{margin-bottom:20px;background:white;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.08);overflow:hidden}
+.enc-pais-header{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:white;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.enc-pais-header h3{font-size:0.95rem;font-weight:600}
+.enc-destinos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:8px;padding:12px}
+.enc-destino-card{border:2px solid var(--border);border-radius:8px;overflow:hidden;transition:all 0.2s;position:relative}
+.enc-destino-card:hover{border-color:var(--primary);box-shadow:0 2px 12px rgba(10,126,140,0.15)}
+.enc-destino-card .enc-img-preview{width:100%;height:70px;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--text-light);font-size:0.72rem;overflow:hidden}
+.enc-destino-card .enc-img-preview img{width:100%;height:100%;object-fit:cover}
+.enc-destino-card .enc-destino-info{padding:6px 8px}
+.enc-destino-card .enc-destino-name{font-weight:600;font-size:0.82rem;color:var(--primary-dark)}
+.enc-destino-card .enc-destino-actions{display:flex;gap:4px;margin-top:4px}
+.enc-add-destino{border:2px dashed var(--border);border-radius:8px;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:var(--text-light);transition:all 0.2s;gap:3px}
+.enc-add-destino:hover{border-color:var(--primary);color:var(--primary);background:rgba(10,126,140,0.03)}
+.enc-add-destino .plus{font-size:1.3rem;font-weight:700}
+
+/* ===== DESTINO SELECTOR ===== */
+.destino-selector{display:flex;gap:5px;align-items:center;margin-bottom:6px}.destino-selector select{flex:1}
+.destino-selected-preview{width:100%;height:50px;border-radius:6px;overflow:hidden;margin-top:4px;border:1px solid var(--border);display:none}
+.destino-selected-preview img{width:100%;height:100%;object-fit:cover}.destino-selected-preview.visible{display:block}
+.tipo-cliente-toggle{display:flex;gap:3px;background:var(--bg);padding:3px;border-radius:6px;margin-bottom:8px}
+.tipo-cliente-btn{flex:1;padding:6px;text-align:center;border:none;background:transparent;border-radius:4px;font-size:0.78rem;font-weight:600;cursor:pointer;color:var(--text-light);transition:all 0.2s}
+.tipo-cliente-btn.active{background:var(--primary);color:white}
+
+/* ===== HISTORIAL ===== */
+.list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.list-header h2{font-family:'Playfair Display',serif;color:var(--primary-dark);font-size:1.4rem}
+.list-search{display:flex;gap:8px;margin-bottom:16px}
+.list-search input,.list-search select{padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.88rem}
+.list-search input{flex:1}.list-search input:focus,.list-search select:focus{outline:none;border-color:var(--primary)}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.hist-card{background:white;border-radius:10px;padding:15px;box-shadow:0 2px 10px rgba(0,0,0,0.08);border-left:4px solid var(--primary);transition:transform 0.2s;cursor:default}
+.hist-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.12)}
+.hist-card.aceptada{border-left-color:var(--success)}
+.hist-card .hist-destino{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--primary-dark);font-weight:700}
+.hist-card .hist-cliente{font-size:0.82rem;color:var(--text-light);margin:3px 0}
+.hist-card .hist-tipo{display:inline-block;font-size:0.68rem;padding:1px 7px;border-radius:10px;font-weight:600}
+.hist-card .hist-tipo.persona{background:#e3f2fd;color:#1565c0}.hist-card .hist-tipo.empresa{background:#fff3e0;color:#e65100}
+.hist-card .hist-fecha{font-size:0.75rem;color:var(--text-light);margin-top:3px}
+.hist-card .hist-formato{font-size:0.68rem;padding:1px 7px;border-radius:10px;background:var(--primary-light);color:var(--primary-dark);font-weight:600}
+.hist-card-actions{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.badge-aceptada{background:var(--success);color:white;font-size:0.65rem;padding:2px 8px;border-radius:10px;font-weight:700}
+.grid-empty{text-align:center;padding:50px 20px;color:var(--text-light);grid-column:1/-1}
+.grid-empty h3{font-family:'Playfair Display',serif;color:var(--primary);margin-bottom:8px}
+
+/* ===== LIST VIEW (Ventas & Clientes) ===== */
+.list-view{display:flex;flex-direction:column;gap:8px}
+.list-row{background:white;border-radius:8px;padding:12px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);display:flex;align-items:center;gap:16px;border-left:4px solid var(--primary);transition:all 0.15s}
+.list-row:hover{box-shadow:0 3px 12px rgba(0,0,0,0.1);transform:translateX(2px)}
+.list-row .lr-main{flex:1;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.list-row .lr-title{font-family:'Playfair Display',serif;font-size:0.95rem;color:var(--primary-dark);font-weight:700;min-width:160px}
+.list-row .lr-detail{font-size:0.78rem;color:var(--text-light);min-width:120px}
+.list-row .lr-badge{font-size:0.65rem;padding:2px 8px;border-radius:10px;font-weight:700;white-space:nowrap}
+.list-row .lr-actions{display:flex;gap:5px;flex-shrink:0}
+.list-row .lr-progress{width:100px;flex-shrink:0}
+.list-row .lr-progress .venta-progress{margin:0}
+.list-row .lr-progress-text{font-size:0.65rem;color:var(--text-light);text-align:center}
+
+/* ===== VENTAS ===== */
+.venta-card{background:white;border-radius:10px;padding:15px;box-shadow:0 2px 10px rgba(0,0,0,0.08);border-left:4px solid var(--accent);transition:transform 0.2s}
+.venta-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.12)}
+.venta-card.estado-pendiente{border-left-color:var(--accent)}
+.venta-card.estado-en_proceso{border-left-color:var(--primary)}
+.venta-card.estado-completada{border-left-color:var(--success)}
+.venta-card.estado-cancelada{border-left-color:var(--danger)}
+.venta-destino{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--primary-dark);font-weight:700}
+.venta-status{display:inline-block;font-size:0.65rem;padding:2px 8px;border-radius:10px;font-weight:700;color:white}
+.venta-status.s-pendiente{background:var(--accent)}.venta-status.s-en_proceso{background:var(--primary)}
+.venta-status.s-completada{background:var(--success)}.venta-status.s-cancelada{background:var(--danger)}
+.venta-info{font-size:0.8rem;color:var(--text-light);margin:3px 0}
+.venta-progress{height:6px;background:var(--border);border-radius:3px;margin:8px 0 4px;overflow:hidden}
+.venta-progress-bar{height:100%;background:var(--success);border-radius:3px;transition:width 0.3s}
+.venta-progress-text{font-size:0.7rem;color:var(--text-light)}
+.venta-actions{display:flex;gap:5px;margin-top:8px}
+.btn-checklist{background:var(--primary-light);color:var(--primary-dark);border:none;border-radius:6px;padding:6px 12px;font-size:0.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all 0.15s}
+.btn-checklist:hover{background:var(--primary);color:white}
+
+/* ===== CLIENTES ===== */
+.cliente-card{background:white;border-radius:10px;padding:15px;box-shadow:0 2px 10px rgba(0,0,0,0.08);border-left:4px solid var(--primary);transition:transform 0.2s}
+.cliente-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.12)}
+.cliente-nombre{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--primary-dark);font-weight:700}
+.cliente-detail{font-size:0.8rem;color:var(--text-light);margin:2px 0}
+.cliente-tags{display:flex;gap:5px;margin:6px 0}
+.cliente-tag{font-size:0.65rem;padding:2px 7px;border-radius:10px;font-weight:600;background:var(--bg);color:var(--text-light)}
+.cliente-actions{display:flex;gap:5px;margin-top:8px}
+
+/* ===== MODAL ===== */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:white;border-radius:12px;width:90%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,0.2)}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.modal-header h3{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--primary-dark)}
+.modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--text-light);padding:4px}
+.modal-close:hover{color:var(--danger)}
+.modal-body{padding:20px;overflow-y:auto;flex:1}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+/* Checklist */
+.checklist-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;margin-bottom:6px;transition:all 0.15s}
+.checklist-item:hover{border-color:var(--primary)}
+.checklist-item.done{background:rgba(39,174,96,0.06);border-color:rgba(39,174,96,0.2)}
+.checklist-item input[type="checkbox"]{accent-color:var(--success);width:16px;height:16px}
+.checklist-item .cl-text{flex:1;font-size:0.85rem}
+.checklist-item.done .cl-text{text-decoration:line-through;color:var(--text-light)}
+.checklist-item .cl-remove{background:none;border:none;color:var(--danger);cursor:pointer;font-size:0.9rem;opacity:0;transition:opacity 0.15s}
+.checklist-item:hover .cl-remove{opacity:1}
+.checklist-add{display:flex;gap:6px;margin-top:10px}
+.checklist-add input{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem}
+.checklist-add input:focus{outline:none;border-color:var(--primary)}
+
+/* Adjuntos internos */
+.adjuntos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin-top:6px}
+.adjunto-card{border:1px solid var(--border);border-radius:6px;overflow:hidden;position:relative}
+.adjunto-card img{width:100%;height:80px;object-fit:cover;display:block}
+.adjunto-card .adjunto-info{padding:3px 5px;font-size:0.68rem}
+.adjunto-card .adjunto-cat{font-weight:600;color:var(--primary-dark);text-transform:uppercase;font-size:0.62rem}
+.adjunto-card .adjunto-label{color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adjunto-card .adjunto-remove{position:absolute;top:2px;right:2px;width:18px;height:18px;background:var(--danger);color:white;border:none;border-radius:50%;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.15s}
+.adjunto-card:hover .adjunto-remove{opacity:1}
+.adjunto-upload-area{border:2px dashed var(--border);border-radius:6px;padding:12px;text-align:center;cursor:pointer;color:var(--text-light);transition:all 0.2s;font-size:0.82rem}
+.adjunto-upload-area:hover{border-color:var(--primary);color:var(--primary);background:rgba(10,126,140,0.03)}
+.cot-adjuntos-page{background:#fff9e6;border:3px dashed var(--accent)}
+.cot-adjuntos-page .internal-badge{background:var(--accent);color:white;padding:5px 18px;text-align:center;font-weight:700;font-size:0.82rem}
+.cot-adjuntos-body{padding:18px 28px}
+.cot-adjuntos-body h3{font-family:'Playfair Display',serif;color:var(--primary-dark);margin-bottom:12px}
+.adjuntos-preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.adjunto-preview-card{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:white;transition:transform 0.15s,box-shadow 0.15s}
+.adjunto-preview-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,0.15)}
+.adjunto-preview-card img{width:100%;height:140px;object-fit:cover;cursor:zoom-in;transition:opacity 0.15s}
+.adjunto-preview-card img:hover{opacity:0.88}
+/* Lightbox */
+.img-lightbox{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:500;align-items:center;justify-content:center;padding:30px;cursor:zoom-out}
+.img-lightbox.open{display:flex}
+.img-lightbox img{max-width:95vw;max-height:90vh;object-fit:contain;border-radius:4px;box-shadow:0 10px 40px rgba(0,0,0,0.5)}
+.img-lightbox-close{position:absolute;top:20px;right:24px;width:40px;height:40px;background:rgba(255,255,255,0.15);color:white;border:2px solid rgba(255,255,255,0.4);border-radius:50%;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.img-lightbox-close:hover{background:rgba(255,255,255,0.3);transform:scale(1.05)}
+.img-lightbox-caption{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:white;font-size:0.85rem;background:rgba(0,0,0,0.6);padding:8px 16px;border-radius:20px;max-width:80vw;text-align:center}
+.adjunto-preview-card .adjunto-preview-info{padding:6px 8px}
+.adjunto-preview-card .adjunto-preview-cat{font-size:0.68rem;font-weight:700;color:var(--primary);text-transform:uppercase}
+.adjunto-preview-card .adjunto-preview-label{font-size:0.82rem;font-weight:600}
+
+/* ===== PRINT ===== */
+/* ===== FORM PANEL SPLITTER ===== */
+.view-editor{overflow:hidden;position:relative}
+.form-panel{overflow-x:auto;border-right:none;flex-shrink:0;min-width:320px;max-width:80vw}
+.form-panel-splitter{width:6px;cursor:col-resize;background:var(--border);flex-shrink:0;transition:background 0.15s;position:relative}
+.form-panel-splitter:hover,.form-panel-splitter.dragging{background:var(--primary)}
+.form-panel-splitter::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:2px;height:30px;background:rgba(255,255,255,0.7);border-radius:1px}
+@media (max-width:900px){.form-panel{width:100%!important;max-width:100%!important}.form-panel-splitter{display:none}}
+
+/* ===== CONFIGURACION ===== */
+.config-tabs{display:flex;gap:4px;margin-bottom:15px;background:var(--bg);padding:4px;border-radius:8px;flex-wrap:wrap}
+.config-tab{padding:8px 14px;border:none;background:transparent;border-radius:6px;font-family:'Open Sans',sans-serif;font-size:0.8rem;font-weight:600;color:var(--text-light);cursor:pointer;transition:all 0.2s}
+.config-tab:hover{color:var(--primary)}
+.config-tab.active{background:var(--primary);color:white;box-shadow:0 2px 8px rgba(10,126,140,0.3)}
+.config-pane{display:none;background:white;border-radius:10px;padding:18px;box-shadow:0 1px 6px rgba(0,0,0,0.06);max-width:900px}
+.config-pane.active{display:block}
+.config-pane h3{font-family:'Playfair Display',serif;color:var(--primary-dark);font-size:1rem;margin-bottom:10px;margin-top:14px}
+.config-pane h3:first-child{margin-top:0}
+.config-pane .service-item{background:rgba(10,126,140,0.03);padding:4px 6px}
+.config-pane .config-list-item input[type="text"],.config-pane .config-list-item textarea{flex:1;padding:5px 8px;font-size:0.82rem;border:1px solid var(--border);border-radius:4px}
+.config-fee-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:500px}
+.config-fee-grid label{display:block;font-size:0.75rem;color:var(--text-light);text-transform:uppercase;font-weight:600;margin-bottom:4px;letter-spacing:0.5px}
+.config-fee-grid input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:6px;font-size:0.9rem}
+.config-fee-grid input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(10,126,140,0.1)}
+.config-hint{font-size:0.75rem;color:var(--text-light);font-style:italic;margin-bottom:10px}
+
+/* ===== CALCULADORA EXCEL ===== */
+.opcion-row .btn-calc-toggle{font-size:0.68rem;padding:2px 7px;margin-left:4px;background:var(--primary-light);border:1px solid var(--primary);color:var(--primary-dark);border-radius:4px;cursor:pointer;font-weight:600}
+.opcion-row .btn-calc-toggle:hover{background:var(--primary);color:white}
+.opcion-row .btn-calc-toggle.active{background:var(--primary);color:white}
+.calc-row>td{padding:0!important}
+.calc-container{background:var(--primary-light);border:1px solid var(--primary);border-radius:6px;padding:10px;margin:4px 0}
+.calc-container h5{font-size:0.72rem;color:var(--primary-dark);text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-bottom:6px}
+.calc-table{width:100%;font-size:0.75rem;border-collapse:collapse;background:white;border-radius:4px;overflow:hidden}
+.calc-table th{background:var(--primary);color:white;padding:5px;font-size:0.7rem;font-weight:600;text-align:center}
+.calc-table td{padding:3px 5px;border-bottom:1px solid rgba(0,0,0,0.05)}
+.calc-table td:first-child{font-weight:600;color:var(--text);width:90px;font-size:0.72rem}
+.calc-table input{width:100%;padding:3px 5px;font-size:0.75rem;border:1px solid transparent;background:var(--bg);border-radius:3px;text-align:right}
+.calc-table input:focus{outline:none;border-color:var(--primary);background:white}
+.calc-table tr.calc-subtotal{background:rgba(10,126,140,0.08);font-weight:600}
+.calc-table tr.calc-subtotal td{color:var(--primary-dark)}
+.calc-table tr.calc-total{background:rgba(232,148,26,0.12);font-weight:700}
+.calc-table tr.calc-total td{color:#d4830f;font-size:0.8rem}
+.calc-table tr.calc-reserva{background:#f0f8f8;font-style:italic}
+.calc-table tr.calc-reserva td{color:var(--primary-dark)}
+.calc-table .calc-readonly{display:block;padding:3px 6px;text-align:right;background:transparent}
+.calc-paxcount{display:flex;gap:8px;align-items:center;margin-top:8px;font-size:0.72rem;color:var(--text-light)}
+.calc-paxcount input{width:45px;padding:3px 5px;border:1px solid var(--border);border-radius:3px;font-size:0.75rem;text-align:center}
+.calc-actions{display:flex;gap:6px;margin-top:8px}
+.calc-apply{font-size:0.72rem;padding:5px 10px;background:var(--accent);color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600}
+.calc-apply:hover{filter:brightness(1.1)}
+.row-manual-override .op-adulto,.row-manual-override .op-nino,.row-manual-override .op-bebe{background:#fffce8!important}
+
+@page{margin:0;size:letter}
+@media print{
+    *{print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
+    html,body{margin:0!important;padding:0!important;overflow:visible!important;background:white!important;width:100%!important;height:auto!important}
+    .app-sidebar,.form-panel,.form-panel-splitter,.app-header,.cot-adjuntos-page,.modal-overlay,.img-lightbox,#viewConfiguracion,#viewHistorial,#viewEncabezados,#viewVentas,#viewClientes{display:none!important}
+    .app-layout,.app-main,.main-views{display:block!important;height:auto!important;overflow:visible!important;width:100%!important}
+    .view-editor{display:block!important;height:auto!important;overflow:visible!important}
+    .preview-panel{background:white!important;padding:0!important;margin:0!important;overflow:visible!important;display:block!important;width:100%!important}
+    .cot-page{box-shadow:none!important;width:100%!important;max-width:100%!important;min-height:0!important;margin:0!important;padding:0!important;page-break-after:always;page-break-inside:avoid}
+    .cot-page:last-child{page-break-after:auto}
+    .cot-header{height:auto!important;min-height:140px}
+    .cot-header .header-bg-img{position:relative!important;width:100%!important;height:auto!important;display:block!important;object-fit:fill!important}
+    .cot-header.has-image{height:auto!important;overflow:visible!important}
+    .cot-body{padding:18px 28px!important}
+    .cot-watermark{width:400px!important;height:400px!important}
+}
+</style>
+</head>
+<body>
+<div class="app-layout">
+<!-- ===== SIDEBAR ===== -->
+<div class="app-sidebar">
+    <div class="sidebar-logo">
+        <h2>Deseos Viajeros</h2>
+        <p>Sistema de Cotizaciones</p>
+    </div>
+    <div class="sidebar-section">
+        <div class="sidebar-section-label">Cotizaciones</div>
+        <div class="sidebar-item active" onclick="nav('editor')"><span class="si-icon">&#9998;</span>Editor</div>
+        <div class="sidebar-item" onclick="nav('historial')"><span class="si-icon">&#128203;</span>Historial<span class="si-badge" id="badgeHistorial"></span></div>
+        <div class="sidebar-item" onclick="nav('encabezados')"><span class="si-icon">&#127748;</span>Encabezados</div>
+    </div>
+    <div class="sidebar-section">
+        <div class="sidebar-section-label">Gesti&oacute;n</div>
+        <div class="sidebar-item" onclick="nav('ventas')"><span class="si-icon">&#128176;</span>Ventas<span class="si-badge" id="badgeVentas"></span></div>
+        <div class="sidebar-item" onclick="nav('clientes')"><span class="si-icon">&#128101;</span>Clientes<span class="si-badge" id="badgeClientes"></span></div>
+        <div class="sidebar-item" onclick="nav('configuracion')"><span class="si-icon">&#9881;</span>Configuraci&oacute;n</div>
+    </div>
+</div>
+
+<!-- ===== MAIN ===== -->
+<div class="app-main">
+<div class="app-header">
+    <h1 id="headerTitle">Editor de Cotizaci&oacute;n</h1>
+    <div class="header-actions" id="headerActions">
+        <button class="btn btn-outline" onclick="resetForm()">&#128260; Nueva</button>
+        <button class="btn btn-accent" onclick="window.print()">&#128424; Exportar PDF</button>
+    </div>
+</div>
+<div class="main-views">
+
+<!-- VIEW: EDITOR -->
+<div class="app-view view-editor active" id="viewEditor">
+<div class="form-panel">
+    <div class="format-tabs">
+        <button class="format-tab active" data-format="america" onclick="switchFormat('america')">Am&eacute;rica</button>
+        <button class="format-tab" data-format="europa" onclick="switchFormat('europa')">Europa / Asia</button>
+        <button class="format-tab" data-format="crucero" onclick="switchFormat('crucero')">Cruceros</button>
+    </div>
+    <!-- Cliente -->
+    <div class="form-section"><div class="form-section-header" onclick="toggleSection(this)">Datos del Cliente<span class="toggle">&#9660;</span></div><div class="form-section-body">
+        <div class="tipo-cliente-toggle">
+            <button class="tipo-cliente-btn active" data-tipo="persona" onclick="switchTipoCliente('persona')">Persona</button>
+            <button class="tipo-cliente-btn" data-tipo="empresa" onclick="switchTipoCliente('empresa')">Empresa</button>
+        </div>
+        <div id="clientePersonaFields">
+            <div class="form-group"><label>Nombre</label><input type="text" id="clienteNombre" placeholder="Nombre completo" oninput="updatePreview()"></div>
+            <div class="form-row"><div class="form-group"><label>Tel&eacute;fono</label><input type="text" id="clienteTelefono" placeholder="8888-8888" oninput="updatePreview()"></div><div class="form-group"><label>Email</label><input type="email" id="clienteEmail" placeholder="correo@ejemplo.com" oninput="updatePreview()"></div></div>
+        </div>
+        <div id="clienteEmpresaFields" style="display:none;">
+            <div class="form-group"><label>Empresa</label><input type="text" id="empresaNombre" placeholder="Empresa S.A." oninput="updatePreview()"></div>
+            <div class="form-group"><label>Contacto</label><input type="text" id="empresaContacto" placeholder="Nombre del contacto" oninput="updatePreview()"></div>
+            <div class="form-row"><div class="form-group"><label>Tel&eacute;fono</label><input type="text" id="empresaTelefono" placeholder="8888-8888" oninput="updatePreview()"></div><div class="form-group"><label>Email</label><input type="email" id="empresaEmail" placeholder="correo@empresa.com" oninput="updatePreview()"></div></div>
+        </div>
+    </div></div>
+    <!-- Paquete -->
+    <div class="form-section"><div class="form-section-header" onclick="toggleSection(this)">Datos del Paquete<span class="toggle">&#9660;</span></div><div class="form-section-body">
+        <div class="form-group"><label>Pa&iacute;s</label><select id="paisSelect" onchange="onPaisChange()"><option value="">-- Seleccionar --</option></select></div>
+        <div class="form-group"><label>Destino</label><div class="destino-selector"><select id="destinoSelect" onchange="onDestinoSelect()"><option value="">-- Seleccionar --</option><option value="__custom">Escribir manualmente...</option></select></div><input type="text" id="destino" placeholder="Ej: Canc&uacute;n" oninput="updatePreview()" style="display:none;"><div class="destino-selected-preview" id="destinoPreviewImg"><img id="destinoPreviewImgTag" src="" alt=""></div></div>
+        <div class="form-row"><div class="form-group"><label>Fecha inicio</label><input type="date" id="fechaInicio" oninput="updatePreview()"></div><div class="form-group"><label>Fecha fin</label><input type="date" id="fechaFin" oninput="updatePreview()"></div></div>
+        <div class="form-group"><label>Alerta (opcional)</label><textarea id="alertaDestino" placeholder="Ej: Vacuna obligatoria..." oninput="updatePreview()"></textarea></div>
+        <div class="form-group"><label>Info adicional (opcional)</label><textarea id="infoDestino" placeholder="Informaci&oacute;n relevante..." oninput="updatePreview()"></textarea></div>
+    </div></div>
+    <!-- Hospedaje incluido -->
+    <div class="form-section" id="hospedajeSection" style="display:none;"><div class="form-section-header" onclick="toggleSection(this)">Hospedaje incluido<span class="toggle">&#9660;</span></div><div class="form-section-body">
+        <p style="font-size:0.72rem;color:var(--text-light);margin-bottom:6px;">Detalle de hoteles con rango de fechas (seleccione entrada y salida).</p>
+        <div id="hospedajeContainer"></div>
+        <button class="btn btn-sm btn-primary" onclick="addHospedaje()" style="margin-top:5px;">+ Agregar hotel</button>
+    </div></div>
+    <!-- Itinerario propuesto (Europa/Asia) -->
+    <div class="form-section" id="itinerarioSection" style="display:none;"><div class="form-section-header" onclick="toggleSection(this)">Itinerario propuesto<span class="toggle">&#9660;</span></div><div class="form-section-body">
+        <p style="font-size:0.72rem;color:var(--text-light);margin-bottom:6px;">Puede pegar datos desde Excel (copiar fila/columna y pegar en cualquier celda).</p>
+        <table class="options-table" style="margin-top:4px;"><thead><tr><th style="width:30px;"></th><th style="width:120px;">Fecha</th><th>Actividad</th><th style="width:30px;"></th></tr></thead><tbody id="itinerarioContainer"></tbody></table>
+        <div style="display:flex;gap:6px;margin-top:5px;"><button class="btn btn-sm btn-primary" onclick="addItinerario()">+ Agregar d&iacute;a</button><button class="btn btn-sm btn-ghost" onclick="autoFillItinerarioFechas()" title="Completa las fechas consecutivas desde la primera fila">&#8635; Auto-rellenar fechas</button></div>
+    </div></div>
+    <!-- Crucero -->
+    <div class="form-section" id="cruceroSection" style="display:none;"><div class="form-section-header" onclick="toggleSection(this)">Datos del Crucero<span class="toggle">&#9660;</span></div><div class="form-section-body">
+        <div class="form-group"><label>Naviera</label><input type="text" id="lineaCrucero" placeholder="Royal Caribbean" oninput="updatePreview()"></div>
+        <div class="form-group"><label>Nombre del barco</label><input type="text" id="nombreBarco" placeholder="Grandeur Of The Seas" oninput="updatePreview()"></div>
+        <div class="form-row"><div class="form-group"><label>Puerto de salida</label><input type="text" id="puertoSalida" placeholder="Col&oacute;n, Panam&aacute;" oninput="updatePreview()"></div><div class="form-group"><label>Fecha de salida</label><input type="text" id="duracionCrucero" placeholder="02 de enero 2027" oninput="updatePreview()"></div></div>
+        <div class="form-group"><label>Itinerario del crucero</label>
+            <table class="options-table" style="margin-top:4px;"><thead><tr><th style="width:90px;">Fecha</th><th>Puerto de escala</th><th style="width:70px;">Llegada</th><th style="width:70px;">Salida</th><th style="width:80px;">Actividad</th><th style="width:30px;"></th></tr></thead><tbody id="puertosContainer"></tbody></table>
+            <button class="btn btn-sm btn-primary" onclick="addPuerto()" style="margin-top:5px;">+ Agregar escala</button>
+        </div>
+        <div class="form-group"><label>Plan de pagos</label><textarea id="planPagos" placeholder="Dep&oacute;sito inicial: $250 por persona (No reembolsable)&#10;Pago Final: 90 d&iacute;as antes del embarque." oninput="updatePreview()" style="min-height:55px;"></textarea></div>
+        <div class="form-group"><label>Recomendaciones</label><textarea id="cruceroRecomendaciones" placeholder="Recomendaciones especiales para el crucero..." oninput="updatePreview()" style="min-height:55px;"></textarea></div>
+    </div></div>
+    <!-- Servicios -->
+    <div class="form-section"><div class="form-section-header" onclick="toggleSection(this)">El paquete incluye<span class="toggle">&#9660;</span></div><div class="form-section-body"><div id="serviciosContainer"></div><button class="btn btn-sm btn-primary" onclick="addServicio()" style="margin-top:5px;">+ Agregar</button></div></div>
+    <!-- Opciones -->
+    <div class="form-section"><div class="form-section-header" onclick="toggleSection(this)"><span id="opcionesTitle">Opciones de Hoteles y Tarifas</span><span class="toggle">&#9660;</span></div><div class="form-section-body">
+        <div class="form-group"><label>Moneda</label><select id="moneda" onchange="updatePreview()"><option value="USD">USD</option><option value="CRC">CRC</option><option value="EUR">EUR</option></select></div>
+        <table class="options-table"><thead><tr><th id="colNombreHeader">Paquete / Hotel</th><th>Adulto</th><th>Ni&ntilde;o 2-11</th><th>Ni&ntilde;o 0-23m</th><th></th></tr></thead><tbody id="opcionesBody"></tbody></table>
+        <button class="btn btn-sm btn-primary" onclick="addOpcion()" style="margin-top:5px;">+ Agregar</button>
+        <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px;">
+            <div class="form-group"><label>Reserva adulto</label><input type="text" id="precioReserva" placeholder="305" oninput="updatePreview()"></div>
+            <div class="form-row"><div class="form-group"><label>Reserva ni&ntilde;o</label><input type="text" id="precioReservaNino" placeholder="-" oninput="updatePreview()"></div><div class="form-group"><label>Reserva beb&eacute;</label><input type="text" id="precioReservaBebe" placeholder="-" oninput="updatePreview()"></div></div>
+        </div>
+    </div></div>
+    <!-- No incluye -->
+    <div class="form-section"><div class="form-section-header" onclick="toggleSection(this)">No incluye<span class="toggle">&#9660;</span></div><div class="form-section-body"><div id="noIncluyeContainer"></div><button class="btn btn-sm btn-primary" onclick="addNoIncluye()" style="margin-top:5px;">+ Agregar</button></div></div>
+    <!-- Politicas -->
+    <div class="form-section"><div class="form-section-header collapsed" onclick="toggleSection(this)">Pol&iacute;ticas de viaje<span class="toggle">&#9660;</span></div><div class="form-section-body collapsed"><div id="politicasContainer"></div><button class="btn btn-sm btn-primary" onclick="addPolitica()" style="margin-top:5px;">+ Agregar</button></div></div>
+    <!-- Cuentas -->
+    <div class="form-section"><div class="form-section-header collapsed" onclick="toggleSection(this)">Cuentas para pago<span class="toggle">&#9660;</span></div><div class="form-section-body collapsed">
+        <div class="form-group"><label>Raz&oacute;n social</label><input type="text" id="razonSocial" placeholder="Nombre legal de la agencia" oninput="updatePreview()"></div>
+        <div class="form-group"><label>C&eacute;dula</label><input type="text" id="cedulaEmpresa" placeholder="C&eacute;dula jur&iacute;dica" oninput="updatePreview()"></div>
+        <div id="cuentasContainer"></div><button class="btn btn-sm btn-primary" onclick="addCuenta()" style="margin-top:5px;">+ Agregar</button>
+    </div></div>
+    <!-- Logo y Watermark -->
+    <div class="form-section"><div class="form-section-header collapsed" onclick="toggleSection(this)">Logo y Marca de agua<span class="toggle">&#9660;</span></div><div class="form-section-body collapsed">
+        <div class="form-group"><label>Logo (header)</label><input type="file" id="logoInput" accept="image/*" onchange="handleLogoUpload(event)"></div>
+        <div class="form-group"><label>Marca de agua</label><input type="file" id="watermarkInput" accept="image/*" onchange="handleWatermarkUpload(event)"></div>
+        <div id="watermarkPreviewThumb" style="display:none;text-align:center;margin-top:5px;"><img id="watermarkThumb" src="" style="max-height:50px;opacity:0.3;" alt=""><br><button class="btn btn-sm btn-danger" onclick="watermarkDataUrl=null;document.getElementById('watermarkPreviewThumb').style.display='none';updatePreview();" style="margin-top:3px;">Quitar</button></div>
+    </div></div>
+    <!-- Adjuntos -->
+    <div class="form-section"><div class="form-section-header" onclick="toggleSection(this)">Adjuntos internos<span class="toggle">&#9660;</span></div><div class="form-section-body">
+        <p style="font-size:0.72rem;color:var(--text-light);margin-bottom:6px;">Im&aacute;genes de apoyo (no visibles al cliente en PDF).</p>
+        <div class="form-row" style="margin-bottom:6px;"><div class="form-group"><label>Categor&iacute;a</label><select id="adjuntoCategoria"><option value="Vuelo">Vuelo</option><option value="Hospedaje">Hospedaje</option><option value="Tour">Tour</option><option value="Traslado">Traslado</option><option value="Seguro">Seguro</option><option value="Otro">Otro</option></select></div><div class="form-group"><label>Descripci&oacute;n</label><input type="text" id="adjuntoDescripcion" placeholder="Ej: Vuelo SJO-CUN"></div></div>
+        <div class="adjunto-upload-area" onclick="document.getElementById('adjuntoFileInput').click();">+ Subir imagen</div>
+        <input type="file" id="adjuntoFileInput" accept="image/*" multiple style="display:none;" onchange="handleAdjuntoUpload(event)">
+        <div class="adjuntos-grid" id="adjuntosGrid"></div>
+    </div></div>
+    <!-- Encargado -->
+    <div class="form-section"><div class="form-section-header" onclick="toggleSection(this)">Encargado<span class="toggle">&#9660;</span></div><div class="form-section-body">
+        <div class="form-group"><label>Encargado</label><select id="encargado" onchange="updatePreview()"><option value="">-- Seleccionar --</option></select></div>
+    </div></div>
+    <button class="btn btn-success" onclick="guardarCotizacion()" style="width:100%;margin-top:4px;margin-bottom:18px;">&#128190; Guardar en Historial</button>
+</div>
+<div class="form-panel-splitter" id="formPanelSplitter" title="Arrastrar para redimensionar"></div>
+<div class="preview-panel" id="previewPanel"></div>
+</div>
+
+<!-- VIEW: HISTORIAL -->
+<div class="app-view view-list" id="viewHistorial">
+    <div class="list-header"><h2>Historial de Cotizaciones</h2><button class="btn btn-danger btn-sm" onclick="limpiarHistorial()">Limpiar</button></div>
+    <div class="list-search"><input type="text" id="historialSearch" placeholder="Buscar por destino, cliente, encargado..." oninput="renderHistorial()"><select id="historialFilterAceptada" onchange="renderHistorial()"><option value="">Todas</option><option value="aceptada">Aceptadas</option><option value="pendiente">Pendientes</option></select></div>
+    <div class="card-grid" id="historialGrid"></div>
+</div>
+
+<!-- VIEW: ENCABEZADOS -->
+<div class="app-view view-list" id="viewEncabezados">
+    <div class="list-header"><h2>Encabezados por Destino</h2></div>
+    <p style="margin-bottom:12px;color:var(--text-light);font-size:0.85rem;">Organice im&aacute;genes de encabezado por pa&iacute;s y destino.</p>
+    <div class="enc-add-pais"><input type="text" id="nuevoPaisInput" placeholder="Nombre del pa&iacute;s..."><button class="btn btn-primary" onclick="agregarPais()">+ Pa&iacute;s</button></div>
+    <div id="paisesContainer"></div>
+</div>
+
+<!-- VIEW: VENTAS -->
+<div class="app-view view-list" id="viewVentas">
+    <div class="list-header"><h2>Ventas</h2></div>
+    <div class="list-search"><input type="text" id="ventasSearch" placeholder="Buscar por destino, cliente, encargado..." oninput="renderVentas()"><select id="ventasFilterEstado" onchange="renderVentas()"><option value="">Todos los estados</option><option value="pendiente">Pendiente</option><option value="en_proceso">En proceso</option><option value="completada">Completada</option><option value="cancelada">Cancelada</option></select></div>
+    <div class="list-view" id="ventasGrid"></div>
+</div>
+
+<!-- VIEW: CLIENTES -->
+<div class="app-view view-list" id="viewClientes">
+    <div class="list-header"><h2>Clientes</h2><button class="btn btn-primary" onclick="openClienteModal()">+ Nuevo Cliente</button></div>
+    <div class="list-search"><input type="text" id="clientesSearch" placeholder="Buscar por nombre, email, documento..." oninput="renderClientes()"></div>
+    <div class="list-view" id="clientesGrid"></div>
+</div>
+
+<!-- VIEW: CONFIGURACION -->
+<div class="app-view view-list" id="viewConfiguracion">
+    <div class="list-header">
+        <h2>Configuraci&oacute;n</h2>
+        <div style="display:flex;gap:6px;">
+            <button class="btn btn-outline" style="color:var(--primary-dark);border-color:var(--primary);" onclick="resetConfigToDefaults()">Restaurar defaults</button>
+            <button class="btn btn-success" onclick="saveConfigFromUI()">&#128190; Guardar configuraci&oacute;n</button>
+        </div>
+    </div>
+    <div class="config-tabs">
+        <button class="config-tab active" data-cfgtab="agencia" onclick="switchConfigTab('agencia')">Agencia</button>
+        <button class="config-tab" data-cfgtab="encargados" onclick="switchConfigTab('encargados')">Encargados</button>
+        <button class="config-tab" data-cfgtab="servicios" onclick="switchConfigTab('servicios')">Servicios</button>
+        <button class="config-tab" data-cfgtab="politicas" onclick="switchConfigTab('politicas')">Pol&iacute;ticas</button>
+        <button class="config-tab" data-cfgtab="noincluye" onclick="switchConfigTab('noincluye')">No incluye</button>
+        <button class="config-tab" data-cfgtab="cuentas" onclick="switchConfigTab('cuentas')">Cuentas bancarias</button>
+        <button class="config-tab" data-cfgtab="checklist" onclick="switchConfigTab('checklist')">Checklist ventas</button>
+        <button class="config-tab" data-cfgtab="fees" onclick="switchConfigTab('fees')">Fees calculadora</button>
+    </div>
+    <div class="config-panes">
+        <div class="config-pane active" id="cfgPane-agencia"></div>
+        <div class="config-pane" id="cfgPane-encargados"></div>
+        <div class="config-pane" id="cfgPane-servicios"></div>
+        <div class="config-pane" id="cfgPane-politicas"></div>
+        <div class="config-pane" id="cfgPane-noincluye"></div>
+        <div class="config-pane" id="cfgPane-cuentas"></div>
+        <div class="config-pane" id="cfgPane-checklist"></div>
+        <div class="config-pane" id="cfgPane-fees"></div>
+    </div>
+</div>
+
+</div><!-- main-views -->
+</div><!-- app-main -->
+</div><!-- app-layout -->
+
+<!-- MODAL: Cliente -->
+<div class="modal-overlay" id="modalCliente"><div class="modal" style="max-width:650px;"><div class="modal-header"><h3 id="modalClienteTitulo">Nuevo Cliente</h3><button class="modal-close" onclick="closeModal('modalCliente')">&times;</button></div><div class="modal-body">
+    <input type="hidden" id="mcId">
+    <p style="font-size:0.7rem;color:var(--text-light);text-transform:uppercase;font-weight:700;letter-spacing:1px;margin-bottom:8px;">Datos Personales</p>
+    <div class="form-group"><label>Nombre completo</label><input type="text" id="mcNombre"></div>
+    <div class="form-row"><div class="form-group"><label>Tipo documento</label><select id="mcTipoDoc"><option value="cedula">C&eacute;dula</option><option value="pasaporte">Pasaporte</option><option value="otro">Otro</option></select></div><div class="form-group"><label>N&uacute;mero documento</label><input type="text" id="mcNumDoc"></div></div>
+    <div class="form-row"><div class="form-group"><label>Nacionalidad</label><input type="text" id="mcNacionalidad"></div><div class="form-group"><label>Fecha nacimiento</label><input type="date" id="mcFechaNac"></div></div>
+    <p style="font-size:0.7rem;color:var(--text-light);text-transform:uppercase;font-weight:700;letter-spacing:1px;margin:12px 0 8px;">Contacto</p>
+    <div class="form-row"><div class="form-group"><label>Tel&eacute;fono</label><input type="text" id="mcTelefono"></div><div class="form-group"><label>Email</label><input type="email" id="mcEmail"></div></div>
+    <div class="form-group"><label>Direcci&oacute;n</label><input type="text" id="mcDireccion"></div>
+    <div class="form-group"><label>Empresa (opcional)</label><input type="text" id="mcEmpresa"></div>
+    <p style="font-size:0.7rem;color:var(--text-light);text-transform:uppercase;font-weight:700;letter-spacing:1px;margin:12px 0 8px;">Documentos de Viaje</p>
+    <div class="form-row"><div class="form-group"><label>N&ordm; pasaporte</label><input type="text" id="mcPasaporte"></div><div class="form-group"><label>Vencimiento pasaporte</label><input type="date" id="mcPasaporteVenc"></div></div>
+    <div class="form-row"><div class="form-group"><label>Programa viajero - Aerol&iacute;nea</label><input type="text" id="mcVFAerolinea"></div><div class="form-group"><label>N&ordm; viajero frecuente</label><input type="text" id="mcVFNumero"></div></div>
+    <p style="font-size:0.7rem;color:var(--text-light);text-transform:uppercase;font-weight:700;letter-spacing:1px;margin:12px 0 8px;">Notas</p>
+    <div class="form-group"><textarea id="mcNotas" placeholder="Notas generales sobre el cliente..." style="min-height:60px;"></textarea></div>
+</div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modalCliente')">Cancelar</button><button class="btn btn-success" onclick="guardarCliente()">Guardar Cliente</button></div></div></div>
+
+<!-- LIGHTBOX: Imagen ampliada -->
+<div class="img-lightbox" id="imgLightbox" onclick="closeImgLightbox(event)">
+    <button class="img-lightbox-close" onclick="closeImgLightbox()" title="Cerrar (Esc)">&times;</button>
+    <img id="imgLightboxImg" src="" alt="">
+    <div class="img-lightbox-caption" id="imgLightboxCaption"></div>
+</div>
+
+<!-- MODAL: Checklist -->
+<div class="modal-overlay" id="modalChecklist"><div class="modal" style="max-width:500px;"><div class="modal-header"><h3 id="modalChecklistTitulo">Checklist</h3><button class="modal-close" onclick="closeModal('modalChecklist')">&times;</button></div><div class="modal-body">
+    <input type="hidden" id="clVentaId">
+    <div class="form-group" style="margin-bottom:12px;"><label>Estado de la venta</label><select id="clEstado" onchange="updateVentaEstado()"><option value="pendiente">Pendiente</option><option value="en_proceso">En proceso</option><option value="completada">Completada</option><option value="cancelada">Cancelada</option></select></div>
+    <div id="checklistItems"></div>
+    <div class="checklist-add"><input type="text" id="clNuevoItem" placeholder="Nuevo item del checklist..." onkeydown="if(event.key==='Enter')addChecklistItem()"><button class="btn btn-sm btn-primary" onclick="addChecklistItem()">+</button></div>
+</div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('modalChecklist')">Cerrar</button></div></div></div>
+
+<script>
+// ===== STATE =====
+let currentFormat='america',tipoCliente='persona',logoDataUrl=null,editingId=null,selectedHeaderImg=null,watermarkDataUrl=null,adjuntos=[],dragEl=null;
+
+// ===== DEFAULTS =====
+const defaultServiciosAmerica=['Boletos a\u00e9reos ida y vuelta (incluye objeto personal mochila y carry on 10 kg) NO incluye equipaje documentado de 23kg.','Hospedajes diarios en el hotel a elegir.','Desayunos diarios.','Traslados aeropuerto-hotel y viceversa.','Uso de las instalaciones.','Impuestos hoteleros.','Impuestos a\u00e9reos.','Asesor\u00eda personalizada sobre lugares para conocer y tips de viaje.','Atenci\u00f3n personalizada antes, durante y despu\u00e9s de su viaje.'];
+const defaultServiciosEuropa=['Boletos a\u00e9reos ida y vuelta (incluye objeto personal mochila y carry on 10 kg) NO incluye equipaje documentado de 23kg.','Hospedajes diarios en el hotel a elegir.','Desayunos diarios.','Traslados aeropuerto-hotel y viceversa.','Seguro de viaje internacional obligatorio.','Impuestos hoteleros.','Impuestos a\u00e9reos.','Asesor\u00eda personalizada sobre lugares para conocer y tips de viaje.','Atenci\u00f3n personalizada antes, durante y despu\u00e9s de su viaje.'];
+const defaultServiciosCrucero=['Boletos a\u00e9reos ida y vuelta (incluye objeto personal mochila y carry on 10 kg) NO incluye equipaje documentado de 23kg.','Crucero en cabina seg\u00fan tipo seleccionado.','Alimentaci\u00f3n completa a bordo.','Entretenimiento a bordo.','Traslados aeropuerto-puerto y viceversa.','Impuestos portuarios.','Impuestos a\u00e9reos.','Asesor\u00eda personalizada sobre lugares para conocer y tips de viaje.','Atenci\u00f3n personalizada antes, durante y despu\u00e9s de su viaje.'];
+const defaultNoIncluye=['Seguro de viaje con coberturas de COVID, se puede adquirir por un costo adicional.','Servicios no mencionados.','Equipaje documentado y de mano, se puede adquirir por un costo adicional.'];
+const defaultPoliticas=['Precios sujetos a disponibilidad y cambio sin previo aviso.','Esto es una cotizaci\u00f3n.','Todos los pasajeros deben verificar que la documentaci\u00f3n para el viaje se encuentre al d\u00eda (pasaporte, visa, pensiones alimenticias, permisos de salida de ni\u00f1os, seg\u00fan sea necesario). No nos hacemos responsables en caso de problemas migratorios.','El pasaporte debe tener vigencia de al menos 6 meses posteriores a la fecha de viaje.','Los hu\u00e9spedes deber\u00e1n presentar un documento de identificaci\u00f3n oficial en vigencia al momento del check-in y una tarjeta de cr\u00e9dito o dep\u00f3sito para gastos imprevistos durante su estancia, esto por pol\u00edtica de los hoteles.','Los boletos a\u00e9reos una vez emitidos no son reembolsables ni transferibles, no se aceptan cambios en nombre. Aplican cargos por cambio de fecha.','Asignaci\u00f3n de asientos: La asignaci\u00f3n de asientos se realiza de forma aleatoria por parte de la aerol\u00ednea y no depende de nuestra gesti\u00f3n.','Se recomienda el uso de caja de seguridad en el hotel, ya que no nos hacemos responsables por p\u00e9rdida o robo de objetos personales.','Dep\u00f3sito de garant\u00eda: Algunos hoteles solicitan tarjeta de cr\u00e9dito, como respaldo ante cualquier incidente.'];
+const defaultCuentas=[];
+const defaultNoIncluyeEuropa=['Equipaje documentado, se puede adquirir por un costo adicional.','City tax o fee resort pagadero en el hotel.','Servicios no mencionados.'];
+const defaultNoIncluyeCrucero=['Excursiones en Tierra.','Restaurantes de Especialidad.','Internet a bordo.'];
+const defaultPoliticasEuropa=['Precios sujetos a disponibilidad y cambio sin previo aviso.','Esto es una cotizaci\u00f3n.','Todos los pasajeros deben verificar que la documentaci\u00f3n para el viaje se encuentre al d\u00eda (pasaporte, visa, pensiones alimenticias, permisos de salida de ni\u00f1os, seg\u00fan sea necesario). No nos hacemos responsables en caso de problemas migratorios.','Los hu\u00e9spedes deber\u00e1n presentar un documento de identificaci\u00f3n oficial en vigencia al momento del check-in y una tarjeta de cr\u00e9dito o dep\u00f3sito para gastos imprevistos durante su estancia.','Pasaporte con vigencia de al menos 6 meses posteriores a la fecha de viaje.','Los boletos a\u00e9reos una vez emitidos no son reembolsables ni transferibles, no se aceptan cambios en nombre. Aplican cargos por cambio de fecha.','Se recomienda el uso de caja de seguridad en el hotel, ya que no nos hacemos responsables por p\u00e9rdida o robo de objetos personales.','Dep\u00f3sito de garant\u00eda: Algunos hoteles solicitan tarjeta de cr\u00e9dito, como respaldo ante cualquier incidente.'];
+const defaultPoliticasCrucero=['Precios sujetos a disponibilidad y cambio sin previo aviso.','Esto es una cotizaci\u00f3n.','Todos los pasajeros deben verificar que la documentaci\u00f3n para el viaje se encuentre al d\u00eda (pasaporte, visa, pensiones alimenticias, permisos de salida de ni\u00f1os, seg\u00fan sea necesario). No nos hacemos responsables en caso de problemas migratorios.','El pasaporte debe tener vigencia de al menos 6 meses posteriores a la fecha de viaje.','El dep\u00f3sito de reserva es no reembolsable.','Cambios de nombre, fecha o barco pueden aplicar penalidades.','La naviera no acepta pasajeras que est\u00e9n de 23 semanas o m\u00e1s de embarazo en cualquier momento del crucero.','Los beb\u00e9s deben tener al menos 6 meses de edad el d\u00eda de inicio del crucero para poder viajar.','En cruceros saliendo de Estados Unidos y Alaska es requerido visa.'];
+const defaultChecklistItems=['Revisi\u00f3n de pasaporte','Pantallazo de la aerol\u00ednea','Confirmaci\u00f3n de hospedaje','Seguro de viaje contratado','Traslados confirmados','Pago completo recibido','Documentos enviados al cliente'];
+
+// ===== LOCALSTORAGE =====
+function getLS(k){try{return JSON.parse(localStorage.getItem(k)||'[]');}catch(e){return[];}}
+function setLS(k,v){localStorage.setItem(k,JSON.stringify(v));}
+function getLSObj(k){try{return JSON.parse(localStorage.getItem(k)||'{}');}catch(e){return {};}}
+function setLSObj(k,v){localStorage.setItem(k,JSON.stringify(v));}
+const getHistorial=()=>getLS('dv_cotizaciones');
+const saveHistorial=(l)=>setLS('dv_cotizaciones',l);
+const getEncabezados=()=>getLSObj('dv_encabezados');
+const saveEncabezados=(d)=>setLSObj('dv_encabezados',d);
+const getVentas=()=>getLS('dv_ventas');
+const saveVentas=(l)=>setLS('dv_ventas',l);
+const getClientes=()=>getLS('dv_clientes');
+const saveClientes=(l)=>setLS('dv_clientes',l);
+const getConfig=()=>getLSObj('dv_config');
+const saveConfig=(c)=>setLSObj('dv_config',c);
+const defaultEncargados=[];
+const defaultAgencyInfo={nombre:'',telefono:'',cedula:'',slogan:'Aqu\u00ed inicia tu viaje...'};
+const defaultFees={reserva_fee:0,fee_adulto:0,fee_nino:0,fee_bebe:0};
+
+// Helper cfgGet() - devuelve config con fallback a defaults hardcodeados
+function cfgGet(){
+    const c=getConfig();
+    return {
+        encargados: c.encargados || defaultEncargados,
+        servicios: {
+            america: (c.servicios&&c.servicios.america) || defaultServiciosAmerica,
+            europa:  (c.servicios&&c.servicios.europa)  || defaultServiciosEuropa,
+            crucero: (c.servicios&&c.servicios.crucero) || defaultServiciosCrucero
+        },
+        noIncluye: {
+            america: (c.noIncluye&&c.noIncluye.america) || defaultNoIncluye,
+            europa:  (c.noIncluye&&c.noIncluye.europa)  || defaultNoIncluyeEuropa,
+            crucero: (c.noIncluye&&c.noIncluye.crucero) || defaultNoIncluyeCrucero
+        },
+        politicas: {
+            america: (c.politicas&&c.politicas.america) || defaultPoliticas,
+            europa:  (c.politicas&&c.politicas.europa)  || defaultPoliticasEuropa,
+            crucero: (c.politicas&&c.politicas.crucero) || defaultPoliticasCrucero
+        },
+        cuentas:   c.cuentas   || defaultCuentas,
+        checklist: c.checklist || defaultChecklistItems,
+        fees:      c.fees      || defaultFees,
+        agencyInfo: Object.assign({},defaultAgencyInfo,c.agencyInfo||{})
+    };
+}
+
+// Helper para parsear números tolerando formatos ($, comas, guiones)
+const num=(v)=>parseFloat(String(v||'').replace(/[^0-9.\-]/g,''))||0;
+
+// Pobla el select de encargados desde config, preservando valor actual
+function populateEncargadosSelect(){
+    const sel=document.getElementById('encargado');
+    if(!sel)return;
+    const current=sel.value;
+    const cfg=cfgGet();
+    sel.innerHTML='<option value="">-- Seleccionar --</option>';
+    cfg.encargados.forEach(e=>{
+        const o=document.createElement('option');o.value=e;o.textContent=e;sel.appendChild(o);
+    });
+    // Si el valor actual no existe en el nuevo config, agrégalo marcado como eliminado
+    if(current&&!cfg.encargados.includes(current)){
+        const o=document.createElement('option');
+        o.value=current;o.textContent=current+' (eliminado)';
+        sel.appendChild(o);
+    }
+    if(current)sel.value=current;
+}
+
+// ===== NAV =====
+function nav(view){
+    document.querySelectorAll('.sidebar-item').forEach(el=>el.classList.remove('active'));
+    const items=document.querySelectorAll('.sidebar-item');
+    const map={editor:0,historial:1,encabezados:2,ventas:3,clientes:4,configuracion:5};
+    if(map[view]!==undefined)items[map[view]].classList.add('active');
+    document.querySelectorAll('.app-view').forEach(v=>v.classList.remove('active'));
+    const titles={editor:'Editor de Cotizaci\u00f3n',historial:'Historial de Cotizaciones',encabezados:'Encabezados por Destino',ventas:'Ventas',clientes:'Clientes',configuracion:'Configuraci\u00f3n'};
+    document.getElementById('headerTitle').textContent=titles[view]||'';
+    const ha=document.getElementById('headerActions');
+    if(view==='editor')ha.innerHTML='<button class="btn btn-outline" onclick="resetForm()">&#128260; Nueva</button><button class="btn btn-accent" onclick="window.print()">&#128424; Exportar PDF</button>';
+    else if(view==='clientes')ha.innerHTML='<button class="btn btn-accent" onclick="openClienteModal()">+ Nuevo Cliente</button>';
+    else ha.innerHTML='';
+    const viewIds={editor:'viewEditor',historial:'viewHistorial',encabezados:'viewEncabezados',ventas:'viewVentas',clientes:'viewClientes',configuracion:'viewConfiguracion'};
+    document.getElementById(viewIds[view]).classList.add('active');
+    if(view==='historial')renderHistorial();
+    if(view==='encabezados')renderEncabezados();
+    if(view==='ventas')renderVentas();
+    if(view==='clientes')renderClientes();
+    if(view==='configuracion')renderConfiguracion();
+    updateBadges();
+}
+
+function updateBadges(){
+    const h=getHistorial(),v=getVentas(),c=getClientes();
+    const bh=document.getElementById('badgeHistorial'),bv=document.getElementById('badgeVentas'),bc=document.getElementById('badgeClientes');
+    bh.textContent=h.length||'';bv.textContent=v.length||'';bc.textContent=c.length||'';
+}
+
+// ===== FORM PANEL RESIZE (splitter) =====
+function initFormPanelResize(){
+    const splitter=document.getElementById('formPanelSplitter');
+    const panel=document.querySelector('.form-panel');
+    if(!splitter||!panel)return;
+    let dragging=false,rafId=null,pendingW=null;
+    splitter.addEventListener('mousedown',function(e){
+        e.preventDefault();
+        dragging=true;
+        splitter.classList.add('dragging');
+        document.body.style.userSelect='none';
+        document.body.style.cursor='col-resize';
+    });
+    document.addEventListener('mousemove',function(e){
+        if(!dragging)return;
+        const min=280,max=Math.min(window.innerWidth-320,window.innerWidth*0.8);
+        pendingW=Math.max(min,Math.min(max,e.clientX));
+        if(!rafId){
+            rafId=requestAnimationFrame(()=>{
+                panel.style.width=pendingW+'px';
+                panel.style.minWidth=pendingW+'px';
+                rafId=null;
+            });
+        }
+    });
+    document.addEventListener('mouseup',function(){
+        if(!dragging)return;
+        dragging=false;
+        splitter.classList.remove('dragging');
+        document.body.style.userSelect='';
+        document.body.style.cursor='';
+        if(pendingW!=null){
+            localStorage.setItem('dv_form_panel_width',String(Math.round(pendingW)));
+        }
+    });
+}
+function restoreFormPanelWidth(){
+    if(window.innerWidth<=900)return;
+    const w=parseInt(localStorage.getItem('dv_form_panel_width')||'0',10);
+    if(w>=280){
+        const panel=document.querySelector('.form-panel');
+        if(panel){panel.style.width=w+'px';panel.style.minWidth=w+'px';}
+    }
+}
+
+// ===== CONFIGURACION VIEW =====
+function renderConfiguracion(){
+    renderConfigAgencia();
+    renderConfigEncargados();
+    renderConfigServicios();
+    renderConfigPoliticas();
+    renderConfigNoIncluye();
+    renderConfigCuentas();
+    renderConfigChecklist();
+    renderConfigFees();
+}
+
+function renderConfigAgencia(){
+    const cfg=cfgGet();
+    const a=cfg.agencyInfo;
+    const pane=document.getElementById('cfgPane-agencia');
+    pane.innerHTML=`<p class="config-hint">Datos de contacto de la agencia que aparecen en el encabezado de la cotizaci\u00f3n.</p>
+    <div class="config-fee-grid">
+        <div><label>Nombre comercial</label><input type="text" id="cfgAg-nombre" value="${esc(a.nombre)}" placeholder="Ej: Mi Agencia de Viajes"></div>
+        <div><label>Tel\u00e9fono</label><input type="text" id="cfgAg-telefono" value="${esc(a.telefono)}" placeholder="Ej: 8888-8888"></div>
+        <div><label>C\u00e9dula jur\u00eddica</label><input type="text" id="cfgAg-cedula" value="${esc(a.cedula)}" placeholder="Ej: 3-102-000000"></div>
+        <div><label>Eslogan (breve)</label><input type="text" id="cfgAg-slogan" value="${esc(a.slogan)}" placeholder="Aqu\u00ed inicia tu viaje..."></div>
+    </div>`;
+}
+
+function switchConfigTab(name){
+    document.querySelectorAll('.config-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelector(`.config-tab[data-cfgtab="${name}"]`).classList.add('active');
+    document.querySelectorAll('.config-pane').forEach(p=>p.classList.remove('active'));
+    document.getElementById('cfgPane-'+name).classList.add('active');
+}
+
+// Helpers para renderizar una lista editable con drag handles
+function renderCfgListItem(value,isTextarea){
+    const input=isTextarea
+        ?`<textarea style="flex:1;min-height:38px;padding:5px 8px;font-size:0.82rem;border:1px solid var(--border);border-radius:4px;">${esc(value||'')}</textarea>`
+        :`<input type="text" value="${esc(value||'')}" style="flex:1;padding:5px 8px;font-size:0.82rem;border:1px solid var(--border);border-radius:4px;">`;
+    return`<div class="service-item config-list-item" draggable="true"><span class="drag-handle" draggable="false">&#9776;</span>${input}<button class="btn-icon remove" onclick="this.parentElement.remove()">&times;</button></div>`;
+}
+
+function renderConfigEncargados(){
+    const cfg=cfgGet();
+    const pane=document.getElementById('cfgPane-encargados');
+    pane.innerHTML=`<p class="config-hint">Lista de personas encargadas de cotizaciones. Puede arrastrar para reordenar.</p>
+    <div id="cfgEncargadosList">${cfg.encargados.map(e=>renderCfgListItem(e,false)).join('')}</div>
+    <button class="btn btn-sm btn-primary" onclick="document.getElementById('cfgEncargadosList').insertAdjacentHTML('beforeend',renderCfgListItem('',false));initDrag(document.getElementById('cfgEncargadosList'));" style="margin-top:8px;">+ Agregar encargado</button>`;
+    initDrag(pane.querySelector('#cfgEncargadosList'));
+}
+
+function renderConfigServicios(){
+    const cfg=cfgGet();
+    const pane=document.getElementById('cfgPane-servicios');
+    const formats=[['america','Am\u00e9rica'],['europa','Europa / Asia'],['crucero','Cruceros']];
+    pane.innerHTML=formats.map(([k,label])=>`
+        <h3>${label}</h3>
+        <p class="config-hint">Servicios incluidos por defecto para el formato ${label}.</p>
+        <div id="cfgServ-${k}">${cfg.servicios[k].map(s=>renderCfgListItem(s,false)).join('')}</div>
+        <button class="btn btn-sm btn-primary" onclick="document.getElementById('cfgServ-${k}').insertAdjacentHTML('beforeend',renderCfgListItem('',false));initDrag(document.getElementById('cfgServ-${k}'));" style="margin-top:6px;">+ Agregar</button>
+    `).join('');
+    formats.forEach(([k])=>initDrag(document.getElementById('cfgServ-'+k)));
+}
+
+function renderConfigPoliticas(){
+    const cfg=cfgGet();
+    const pane=document.getElementById('cfgPane-politicas');
+    const formats=[['america','Am\u00e9rica'],['europa','Europa / Asia'],['crucero','Cruceros']];
+    pane.innerHTML=formats.map(([k,label])=>`
+        <h3>${label}</h3>
+        <div id="cfgPol-${k}">${cfg.politicas[k].map(s=>renderCfgListItem(s,true)).join('')}</div>
+        <button class="btn btn-sm btn-primary" onclick="document.getElementById('cfgPol-${k}').insertAdjacentHTML('beforeend',renderCfgListItem('',true));initDrag(document.getElementById('cfgPol-${k}'));" style="margin-top:6px;">+ Agregar</button>
+    `).join('');
+    formats.forEach(([k])=>initDrag(document.getElementById('cfgPol-'+k)));
+}
+
+function renderConfigNoIncluye(){
+    const cfg=cfgGet();
+    const pane=document.getElementById('cfgPane-noincluye');
+    const formats=[['america','Am\u00e9rica'],['europa','Europa / Asia'],['crucero','Cruceros']];
+    pane.innerHTML=formats.map(([k,label])=>`
+        <h3>${label}</h3>
+        <div id="cfgNI-${k}">${cfg.noIncluye[k].map(s=>renderCfgListItem(s,false)).join('')}</div>
+        <button class="btn btn-sm btn-primary" onclick="document.getElementById('cfgNI-${k}').insertAdjacentHTML('beforeend',renderCfgListItem('',false));initDrag(document.getElementById('cfgNI-${k}'));" style="margin-top:6px;">+ Agregar</button>
+    `).join('');
+    formats.forEach(([k])=>initDrag(document.getElementById('cfgNI-'+k)));
+}
+
+function renderConfigCuentas(){
+    const cfg=cfgGet();
+    const pane=document.getElementById('cfgPane-cuentas');
+    pane.innerHTML=`<p class="config-hint">Cuentas bancarias por defecto que aparecen en la \u00faltima p\u00e1gina de la cotizaci\u00f3n.</p>
+    <div id="cfgCuentasList"></div>
+    <button class="btn btn-sm btn-primary" onclick="cfgAddCuenta()" style="margin-top:8px;">+ Agregar cuenta</button>`;
+    const list=document.getElementById('cfgCuentasList');
+    cfg.cuentas.forEach(c=>{
+        const d=document.createElement('div');
+        d.style.cssText='border:1px solid var(--border);border-radius:6px;padding:8px;margin-bottom:6px;';
+        d.innerHTML=`<div class="form-row"><div class="form-group"><label>Tipo</label><input type="text" class="cfg-cu-tipo" value="${esc(c.tipo)}"></div><div class="form-group"><label>N\u00famero</label><input type="text" class="cfg-cu-num" value="${esc(c.cuenta)}"></div></div><div class="form-group"><label>IBAN</label><input type="text" class="cfg-cu-iban" value="${esc(c.iban||'')}" placeholder="Opcional"></div><div class="form-group"><label>Nota</label><input type="text" class="cfg-cu-nota" value="${esc(c.nota||'')}" placeholder="Opcional"></div><button class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">Eliminar</button>`;
+        list.appendChild(d);
+    });
+}
+function cfgAddCuenta(){
+    const list=document.getElementById('cfgCuentasList');
+    const d=document.createElement('div');
+    d.style.cssText='border:1px solid var(--border);border-radius:6px;padding:8px;margin-bottom:6px;';
+    d.innerHTML=`<div class="form-row"><div class="form-group"><label>Tipo</label><input type="text" class="cfg-cu-tipo" value=""></div><div class="form-group"><label>N\u00famero</label><input type="text" class="cfg-cu-num" value=""></div></div><div class="form-group"><label>IBAN</label><input type="text" class="cfg-cu-iban" value="" placeholder="Opcional"></div><div class="form-group"><label>Nota</label><input type="text" class="cfg-cu-nota" value="" placeholder="Opcional"></div><button class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">Eliminar</button>`;
+    list.appendChild(d);
+}
+
+function renderConfigChecklist(){
+    const cfg=cfgGet();
+    const pane=document.getElementById('cfgPane-checklist');
+    pane.innerHTML=`<p class="config-hint">Items del checklist por defecto que se crean autom\u00e1ticamente con cada venta nueva.</p>
+    <div id="cfgChecklistList">${cfg.checklist.map(s=>renderCfgListItem(s,false)).join('')}</div>
+    <button class="btn btn-sm btn-primary" onclick="document.getElementById('cfgChecklistList').insertAdjacentHTML('beforeend',renderCfgListItem('',false));initDrag(document.getElementById('cfgChecklistList'));" style="margin-top:8px;">+ Agregar item</button>`;
+    initDrag(pane.querySelector('#cfgChecklistList'));
+}
+
+function renderConfigFees(){
+    const cfg=cfgGet();
+    const pane=document.getElementById('cfgPane-fees');
+    pane.innerHTML=`<p class="config-hint">Valores por defecto que usa la calculadora de costos por hotel. Estos fees se pre-rellenan al crear una nueva opci\u00f3n.</p>
+    <div class="config-fee-grid">
+        <div><label>Reserva fee (se suma al boleto)</label><input type="number" id="cfgFee-reserva" step="0.01" value="${cfg.fees.reserva_fee}"></div>
+        <div><label>Fee Adulto</label><input type="number" id="cfgFee-adulto" step="0.01" value="${cfg.fees.fee_adulto}"></div>
+        <div><label>Fee Ni&ntilde;o (11-3)</label><input type="number" id="cfgFee-nino" step="0.01" value="${cfg.fees.fee_nino}"></div>
+        <div><label>Fee Beb&eacute; (&lt;3)</label><input type="number" id="cfgFee-bebe" step="0.01" value="${cfg.fees.fee_bebe}"></div>
+    </div>`;
+}
+
+function collectConfigListFromDOM(containerId,isTextarea){
+    const list=[];
+    const sel=isTextarea?'textarea':'input[type="text"]';
+    document.querySelectorAll('#'+containerId+' .config-list-item '+sel).forEach(el=>{
+        if(el.value&&el.value.trim())list.push(el.value.trim());
+    });
+    return list;
+}
+
+function saveConfigFromUI(){
+    const c={_version:1};
+    // Agencia
+    c.agencyInfo={
+        nombre:document.getElementById('cfgAg-nombre')?.value||'',
+        telefono:document.getElementById('cfgAg-telefono')?.value||'',
+        cedula:document.getElementById('cfgAg-cedula')?.value||'',
+        slogan:document.getElementById('cfgAg-slogan')?.value||'Aqu\u00ed inicia tu viaje...'
+    };
+    // Encargados
+    c.encargados=collectConfigListFromDOM('cfgEncargadosList',false);
+    // Servicios
+    c.servicios={
+        america:collectConfigListFromDOM('cfgServ-america',false),
+        europa:collectConfigListFromDOM('cfgServ-europa',false),
+        crucero:collectConfigListFromDOM('cfgServ-crucero',false)
+    };
+    // Politicas (textarea)
+    c.politicas={
+        america:collectConfigListFromDOM('cfgPol-america',true),
+        europa:collectConfigListFromDOM('cfgPol-europa',true),
+        crucero:collectConfigListFromDOM('cfgPol-crucero',true)
+    };
+    // No incluye
+    c.noIncluye={
+        america:collectConfigListFromDOM('cfgNI-america',false),
+        europa:collectConfigListFromDOM('cfgNI-europa',false),
+        crucero:collectConfigListFromDOM('cfgNI-crucero',false)
+    };
+    // Cuentas
+    c.cuentas=[];
+    document.querySelectorAll('#cfgCuentasList > div').forEach(div=>{
+        const tipo=div.querySelector('.cfg-cu-tipo')?.value||'';
+        if(tipo.trim()){
+            c.cuentas.push({
+                tipo,
+                cuenta:div.querySelector('.cfg-cu-num')?.value||'',
+                iban:div.querySelector('.cfg-cu-iban')?.value||'',
+                nota:div.querySelector('.cfg-cu-nota')?.value||''
+            });
+        }
+    });
+    // Checklist
+    c.checklist=collectConfigListFromDOM('cfgChecklistList',false);
+    // Fees
+    c.fees={
+        reserva_fee:num(document.getElementById('cfgFee-reserva').value),
+        fee_adulto:num(document.getElementById('cfgFee-adulto').value),
+        fee_nino:num(document.getElementById('cfgFee-nino').value),
+        fee_bebe:num(document.getElementById('cfgFee-bebe').value)
+    };
+    saveConfig(c);
+    populateEncargadosSelect();
+    // Actualizar razón social y cédula en el editor si están vacíos (para no pisar si el usuario los cambió)
+    const rs=document.getElementById('razonSocial');if(rs&&!rs.value)rs.value=c.agencyInfo.nombre;
+    const ced=document.getElementById('cedulaEmpresa');if(ced&&!ced.value)ced.value=c.agencyInfo.cedula;
+    updatePreview();
+    alert('Configuraci\u00f3n guardada correctamente.');
+}
+
+function resetConfigToDefaults(){
+    if(!confirm('\u00bfRestaurar toda la configuraci\u00f3n a los valores por defecto? Esta acci\u00f3n no se puede deshacer.'))return;
+    localStorage.removeItem('dv_config');
+    populateEncargadosSelect();
+    renderConfiguracion();
+    alert('Configuraci\u00f3n restaurada.');
+}
+
+// ===== INIT =====
+function init(){
+    const cfg=cfgGet();
+    loadServicios(cfg.servicios.america);loadNoIncluye(cfg.noIncluye.america);loadPoliticas(cfg.politicas.america);loadCuentas(cfg.cuentas);populateEncargadosSelect();
+    // Pre-llenar razón social y cédula desde agencyInfo
+    if(cfg.agencyInfo.nombre)document.getElementById('razonSocial').value=cfg.agencyInfo.nombre;
+    if(cfg.agencyInfo.cedula)document.getElementById('cedulaEmpresa').value=cfg.agencyInfo.cedula;
+    addOpcion();populatePaisSelect();initAllDrag();initFormPanelResize();restoreFormPanelWidth();updatePreview();updateBadges();
+}
+
+// ===== SECTION TOGGLE =====
+function toggleSection(h){h.classList.toggle('collapsed');h.nextElementSibling.classList.toggle('collapsed');}
+
+// ===== TIPO CLIENTE =====
+function switchTipoCliente(t){tipoCliente=t;document.querySelectorAll('.tipo-cliente-btn').forEach(b=>b.classList.remove('active'));document.querySelector(`.tipo-cliente-btn[data-tipo="${t}"]`).classList.add('active');document.getElementById('clientePersonaFields').style.display=t==='persona'?'':'none';document.getElementById('clienteEmpresaFields').style.display=t==='empresa'?'':'none';updatePreview();}
+
+// ===== FORMAT =====
+function switchFormat(f){
+currentFormat=f;
+document.querySelectorAll('.format-tab').forEach(t=>t.classList.remove('active'));
+document.querySelector(`[data-format="${f}"]`).classList.add('active');
+// Show/hide format-specific sections
+document.getElementById('cruceroSection').style.display=f==='crucero'?'':'none';
+document.getElementById('hospedajeSection').style.display=f!=='crucero'?'':'none';
+document.getElementById('itinerarioSection').style.display=f==='europa'?'':'none';
+// Column headers
+document.getElementById('colNombreHeader').textContent=f==='crucero'?'Tipo de Cabina':'Paquete / Hotel';
+document.getElementById('opcionesTitle').textContent=f==='crucero'?'Cabinas y Tarifas':'Hoteles y Tarifas';
+// Load defaults (from config with fallback)
+const cfg=cfgGet();
+loadServicios(cfg.servicios[f]);
+loadNoIncluye(cfg.noIncluye[f]);
+loadPoliticas(cfg.politicas[f]);
+updatePreview();
+}
+
+// ===== SERVICIOS =====
+function loadServicios(l){const c=document.getElementById('serviciosContainer');c.innerHTML='';l.forEach(s=>addServicioItem(s,true));}
+function addServicio(){addServicioItem('',true);}
+function addServicioItem(t,ch){const c=document.getElementById('serviciosContainer');const d=document.createElement('div');d.className='service-item';d.draggable=true;d.innerHTML=`<span class="drag-handle" draggable="false">&#9776;</span><input type="checkbox" ${ch?'checked':''} onchange="updatePreview()"><input type="text" value="${esc(t)}" placeholder="Servicio..." oninput="updatePreview()"><button class="btn-icon remove" onclick="this.parentElement.remove();updatePreview();">&times;</button>`;c.appendChild(d);updatePreview();}
+
+// ===== NO INCLUYE =====
+function loadNoIncluye(l){const c=document.getElementById('noIncluyeContainer');c.innerHTML='';l.forEach(s=>addNoIncluyeItem(s));}
+function addNoIncluye(){addNoIncluyeItem('');}
+function addNoIncluyeItem(t){const c=document.getElementById('noIncluyeContainer');const d=document.createElement('div');d.className='service-item';d.draggable=true;d.innerHTML=`<span class="drag-handle" draggable="false">&#9776;</span><input type="text" value="${esc(t)}" placeholder="No incluido..." oninput="updatePreview()"><button class="btn-icon remove" onclick="this.parentElement.remove();updatePreview();">&times;</button>`;c.appendChild(d);updatePreview();}
+
+// ===== POLITICAS =====
+function loadPoliticas(l){const c=document.getElementById('politicasContainer');c.innerHTML='';l.forEach(p=>addPoliticaItem(p));}
+function addPolitica(){addPoliticaItem('');}
+function addPoliticaItem(t){const c=document.getElementById('politicasContainer');const d=document.createElement('div');d.className='service-item';d.draggable=true;d.innerHTML=`<span class="drag-handle" draggable="false">&#9776;</span><textarea style="flex:1;min-height:32px;padding:3px 5px;font-size:0.78rem;" oninput="updatePreview()">${esc(t)}</textarea><button class="btn-icon remove" onclick="this.parentElement.remove();updatePreview();">&times;</button>`;c.appendChild(d);}
+
+// ===== CUENTAS =====
+function loadCuentas(l){const c=document.getElementById('cuentasContainer');c.innerHTML='';l.forEach(d=>addCuentaItem(d));}
+function addCuenta(){addCuentaItem({tipo:'',cuenta:'',iban:'',nota:''});}
+function addCuentaItem(data){const c=document.getElementById('cuentasContainer');const d=document.createElement('div');d.style.cssText='border:1px solid var(--border);border-radius:6px;padding:7px;margin-bottom:5px;';d.innerHTML=`<div class="form-row"><div class="form-group"><label>Tipo</label><input type="text" class="cuenta-tipo" value="${esc(data.tipo)}" oninput="updatePreview()"></div><div class="form-group"><label>N\u00famero</label><input type="text" class="cuenta-numero" value="${esc(data.cuenta)}" oninput="updatePreview()"></div></div><div class="form-group"><label>IBAN</label><input type="text" class="cuenta-iban" value="${esc(data.iban)}" placeholder="Opcional" oninput="updatePreview()"></div><div class="form-group"><label>Nota</label><input type="text" class="cuenta-nota" value="${esc(data.nota)}" placeholder="Opcional" oninput="updatePreview()"></div><button class="btn btn-sm btn-danger" onclick="this.parentElement.remove();updatePreview();">Eliminar</button>`;c.appendChild(d);}
+
+// ===== OPCIONES TABLE + CALCULADORA =====
+function addOpcion(data){
+    const tbody=document.getElementById('opcionesBody');
+    const opId='op_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+    const fees=cfgGet().fees;
+    // Estado inicial del calc (pre-rellena fees desde config)
+    const calc=(data&&data.calc)?data.calc:{
+        expanded:false,
+        values:{
+            boleto:{ad:'',n11:'',n3:''},
+            hotel:{ad:'',n11:'',n3:''},
+            tours:{ad:'',n11:'',n3:''},
+            transp:{ad:'',n11:'',n3:''},
+            fee:{ad:String(fees.fee_adulto||''),n11:String(fees.fee_nino||''),n3:String(fees.fee_bebe||'')},
+            xgrupo:{ad:'',n11:'',n3:''}
+        },
+        paxCount:{ad:1,n11:0,n3:0}
+    };
+    // Fila principal
+    const tr=document.createElement('tr');
+    tr.className='opcion-row';
+    tr.dataset.opcionId=opId;
+    tr.dataset.calc=JSON.stringify(calc);
+    const nombre=(data&&data.nombre)||'';
+    const adulto=(data&&data.adulto)||'';
+    const nino=(data&&data.nino)||'';
+    const bebe=(data&&data.bebe)||'';
+    tr.innerHTML=`<td><input type="text" class="op-nombre" value="${esc(nombre)}" placeholder="${currentFormat==='crucero'?'Cabina Interior':'Hotel Crown Paradise'}" oninput="updatePreview()"><button class="btn-calc-toggle" onclick="toggleCalc(this)" title="Calculadora de costos">&#128200; calc</button></td><td><input type="text" class="price-input op-adulto" value="${esc(adulto)}" placeholder="0" oninput="onPriceManualEdit(this);updatePreview();"></td><td><input type="text" class="price-input op-nino" value="${esc(nino)}" placeholder="-" oninput="onPriceManualEdit(this);updatePreview();"></td><td><input type="text" class="price-input op-bebe" value="${esc(bebe)}" placeholder="-" oninput="onPriceManualEdit(this);updatePreview();"></td><td class="row-actions"><button class="btn-icon remove" onclick="removeOpcion(this)">&times;</button></td>`;
+    tbody.appendChild(tr);
+    // Fila de calculadora (oculta por default)
+    const calcTr=document.createElement('tr');
+    calcTr.className='calc-row';
+    calcTr.dataset.opcionId=opId;
+    calcTr.style.display=calc.expanded?'':'none';
+    calcTr.innerHTML=buildCalcHtml(opId,calc);
+    tbody.appendChild(calcTr);
+    // Si tiene data.calc guardado, poblar los inputs con los valores
+    populateCalcInputs(opId,calc);
+    recalcRow(opId,false); // display only, no auto-fill on load
+    updatePreview();
+    return opId;
+}
+
+function buildCalcHtml(opId,calc){
+    return`<td colspan="5"><div class="calc-container">
+        <h5>&#128200; Calculadora de costos &mdash; ingrese los rubros y el total se aplica autom\u00e1ticamente</h5>
+        <table class="calc-table">
+            <thead><tr><th></th><th>Adulto</th><th>Ni\u00f1o 11-3</th><th>Ni\u00f1o &lt;3</th></tr></thead>
+            <tbody>
+                <tr><td>Boleto</td><td><input data-op="${opId}" data-fld="boleto" data-col="ad" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="boleto" data-col="n11" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="boleto" data-col="n3" oninput="onCalcInput(this)"></td></tr>
+                <tr><td>Hotel</td><td><input data-op="${opId}" data-fld="hotel" data-col="ad" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="hotel" data-col="n11" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="hotel" data-col="n3" oninput="onCalcInput(this)"></td></tr>
+                <tr><td>Tours</td><td><input data-op="${opId}" data-fld="tours" data-col="ad" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="tours" data-col="n11" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="tours" data-col="n3" oninput="onCalcInput(this)"></td></tr>
+                <tr><td>Transporte</td><td><input data-op="${opId}" data-fld="transp" data-col="ad" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="transp" data-col="n11" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="transp" data-col="n3" oninput="onCalcInput(this)"></td></tr>
+                <tr class="calc-subtotal"><td>Subtotal</td><td><span class="calc-readonly" data-op="${opId}" data-sub="ad">0.00</span></td><td><span class="calc-readonly" data-op="${opId}" data-sub="n11">0.00</span></td><td><span class="calc-readonly" data-op="${opId}" data-sub="n3">0.00</span></td></tr>
+                <tr><td>Fee</td><td><input data-op="${opId}" data-fld="fee" data-col="ad" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="fee" data-col="n11" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="fee" data-col="n3" oninput="onCalcInput(this)"></td></tr>
+                <tr><td>X grupo</td><td><input data-op="${opId}" data-fld="xgrupo" data-col="ad" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="xgrupo" data-col="n11" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="xgrupo" data-col="n3" oninput="onCalcInput(this)"></td></tr>
+                <tr class="calc-total"><td>Total</td><td><span class="calc-readonly" data-op="${opId}" data-tot="ad">0.00</span></td><td><span class="calc-readonly" data-op="${opId}" data-tot="n11">0.00</span></td><td><span class="calc-readonly" data-op="${opId}" data-tot="n3">0.00</span></td></tr>
+                <tr class="calc-reserva"><td>Reserva</td><td><span class="calc-readonly" data-op="${opId}" data-res="ad">0.00</span></td><td><span class="calc-readonly" data-op="${opId}" data-res="n11">0.00</span></td><td><span class="calc-readonly" data-op="${opId}" data-res="n3">0.00</span></td></tr>
+            </tbody>
+        </table>
+        <div class="calc-paxcount">
+            Pax del grupo:
+            <label>Ad <input type="number" data-op="${opId}" data-pax="ad" min="1" value="1" oninput="onCalcInput(this)"></label>
+            <label>Ni&ntilde;o <input type="number" data-op="${opId}" data-pax="n11" min="0" value="0" oninput="onCalcInput(this)"></label>
+            <label>Beb&eacute; <input type="number" data-op="${opId}" data-pax="n3" min="0" value="0" oninput="onCalcInput(this)"></label>
+        </div>
+        <div class="calc-actions">
+            <button class="calc-apply" onclick="applyCalcToRow('${opId}')">Aplicar total al precio</button>
+            <small style="color:var(--text-light);font-size:0.68rem;align-self:center;">Los valores se aplican autom\u00e1ticamente salvo que edite el precio manualmente.</small>
+        </div>
+    </div></td>`;
+}
+
+function populateCalcInputs(opId,calc){
+    const v=calc.values||{};
+    ['boleto','hotel','tours','transp','fee','xgrupo'].forEach(fld=>{
+        ['ad','n11','n3'].forEach(col=>{
+            const inp=document.querySelector(`input[data-op="${opId}"][data-fld="${fld}"][data-col="${col}"]`);
+            if(inp)inp.value=(v[fld]&&v[fld][col])||'';
+        });
+    });
+    ['ad','n11','n3'].forEach(col=>{
+        const p=document.querySelector(`input[data-op="${opId}"][data-pax="${col}"]`);
+        if(p&&calc.paxCount&&calc.paxCount[col]!=null)p.value=calc.paxCount[col];
+    });
+}
+
+function toggleCalc(btn){
+    const tr=btn.closest('tr');
+    const opId=tr.dataset.opcionId;
+    const calcTr=document.querySelector(`tr.calc-row[data-opcion-id="${opId}"]`);
+    if(!calcTr)return;
+    const isHidden=calcTr.style.display==='none';
+    calcTr.style.display=isHidden?'':'none';
+    btn.classList.toggle('active',isHidden);
+    // Persist expanded state
+    const calc=JSON.parse(tr.dataset.calc||'{}');
+    calc.expanded=isHidden;
+    tr.dataset.calc=JSON.stringify(calc);
+}
+
+function removeOpcion(btn){
+    const tr=btn.closest('tr');
+    const opId=tr.dataset.opcionId;
+    const calcTr=document.querySelector(`tr.calc-row[data-opcion-id="${opId}"]`);
+    if(calcTr)calcTr.remove();
+    tr.remove();
+    updatePreview();
+}
+
+function onCalcInput(el){
+    const opId=el.dataset.op;
+    recalcRow(opId,true);
+}
+
+function onPriceManualEdit(el){
+    const tr=el.closest('tr.opcion-row');
+    if(!tr)return;
+    tr.dataset.manualOverride='1';
+    tr.classList.add('row-manual-override');
+}
+
+function applyCalcToRow(opId){
+    const tr=document.querySelector(`tr.opcion-row[data-opcion-id="${opId}"]`);
+    if(!tr)return;
+    tr.dataset.manualOverride='';
+    tr.classList.remove('row-manual-override');
+    recalcRow(opId,true);
+    updatePreview();
+}
+
+function recalcRow(opId,autoFill){
+    const tr=document.querySelector(`tr.opcion-row[data-opcion-id="${opId}"]`);
+    if(!tr)return;
+    // Recolectar values del calc-row DOM
+    const calc={values:{},paxCount:{}};
+    ['boleto','hotel','tours','transp','fee','xgrupo'].forEach(fld=>{
+        calc.values[fld]={};
+        ['ad','n11','n3'].forEach(col=>{
+            const inp=document.querySelector(`input[data-op="${opId}"][data-fld="${fld}"][data-col="${col}"]`);
+            calc.values[fld][col]=inp?inp.value:'';
+        });
+    });
+    ['ad','n11','n3'].forEach(col=>{
+        const p=document.querySelector(`input[data-op="${opId}"][data-pax="${col}"]`);
+        calc.paxCount[col]=p?parseInt(p.value||'0',10):0;
+    });
+    // Preservar expanded y persistir en dataset
+    const prev=JSON.parse(tr.dataset.calc||'{}');
+    calc.expanded=prev.expanded||false;
+    tr.dataset.calc=JSON.stringify(calc);
+    // Fórmulas
+    const reservaFee=cfgGet().fees.reserva_fee||0;
+    const results={ad:{},n11:{},n3:{}};
+    ['ad','n11','n3'].forEach(col=>{
+        const bol=num(calc.values.boleto[col]);
+        const hot=num(calc.values.hotel[col]);
+        const tou=num(calc.values.tours[col]);
+        const tra=num(calc.values.transp[col]);
+        const fee=num(calc.values.fee[col]);
+        const xgr=num(calc.values.xgrupo[col]);
+        const pax=Math.max(1,calc.paxCount[col]||0);
+        const sub=bol+hot+tou+tra;
+        const xgrPerPax=calc.paxCount[col]>0?(xgr/pax):0;
+        const total=sub+fee+xgrPerPax;
+        const reserva=bol+reservaFee;
+        results[col]={sub,total,reserva};
+    });
+    // Update readonly cells
+    ['ad','n11','n3'].forEach(col=>{
+        const subEl=document.querySelector(`span[data-op="${opId}"][data-sub="${col}"]`);
+        const totEl=document.querySelector(`span[data-op="${opId}"][data-tot="${col}"]`);
+        const resEl=document.querySelector(`span[data-op="${opId}"][data-res="${col}"]`);
+        if(subEl)subEl.textContent=results[col].sub.toFixed(2);
+        if(totEl)totEl.textContent=results[col].total.toFixed(2);
+        if(resEl)resEl.textContent=results[col].reserva.toFixed(2);
+    });
+    // Auto-fill main row (si no hay manual override)
+    if(autoFill&&tr.dataset.manualOverride!=='1'){
+        const adInp=tr.querySelector('.op-adulto');
+        const niInp=tr.querySelector('.op-nino');
+        const beInp=tr.querySelector('.op-bebe');
+        // Solo actualiza si el total es > 0 (usuario ingresó algo)
+        if(results.ad.total>0)adInp.value=results.ad.total.toFixed(2);
+        if(results.n11.total>0)niInp.value=results.n11.total.toFixed(2);
+        if(results.n3.total>0)beInp.value=results.n3.total.toFixed(2);
+        updatePreview();
+    }
+}
+
+// ===== HOSPEDAJE INCLUIDO =====
+function addHospedaje(hotel,fechaInicio,fechaFin){
+    const c=document.getElementById('hospedajeContainer');const d=document.createElement('div');d.className='service-item';d.draggable=true;
+    d.innerHTML=`<span class="drag-handle" draggable="false">&#9776;</span><input type="text" class="h-hotel" value="${esc(hotel||'')}" placeholder="Nombre del hotel" style="flex:1;" oninput="updatePreview()"><input type="date" class="h-fi" value="${esc(fechaInicio||'')}" style="width:135px;flex:none;" oninput="updatePreview()" title="Fecha entrada"><input type="date" class="h-ff" value="${esc(fechaFin||'')}" style="width:135px;flex:none;" oninput="updatePreview()" title="Fecha salida"><button class="btn-icon remove" onclick="this.parentElement.remove();updatePreview();">&times;</button>`;
+    c.appendChild(d);updatePreview();
+}
+
+// Formatea rango de fechas a "del 24 al 27 de junio" o "del 28 de junio al 3 de julio"
+function formatHospedajeRange(fi,ff){
+    if(!fi||!ff)return'';
+    const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const d1=new Date(fi+'T12:00:00'),d2=new Date(ff+'T12:00:00');
+    if(d1.getMonth()===d2.getMonth()&&d1.getFullYear()===d2.getFullYear()){
+        return`del ${d1.getDate()} al ${d2.getDate()} de ${meses[d1.getMonth()]}`;
+    }
+    return`del ${d1.getDate()} de ${meses[d1.getMonth()]} al ${d2.getDate()} de ${meses[d2.getMonth()]}`;
+}
+
+// ===== ITINERARIO PROPUESTO (tabla Excel) =====
+function addItinerario(dia,actividad){
+    const tbody=document.getElementById('itinerarioContainer');const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="width:30px;"><span class="drag-handle" draggable="false" style="cursor:grab;">&#9776;</span></td><td style="width:120px;"><input type="date" class="it-dia" value="${esc(dia||'')}" oninput="updatePreview()" onpaste="handleItinerarioPaste(event,this)"></td><td><input type="text" class="it-act" value="${esc(actividad||'')}" placeholder="Actividad del d\u00eda" oninput="updatePreview()" onpaste="handleItinerarioPaste(event,this)"></td><td style="width:30px;"><button class="btn-icon remove" onclick="this.closest('tr').remove();updatePreview();">&times;</button></td>`;
+    tr.draggable=true;
+    tbody.appendChild(tr);updatePreview();
+    return tr;
+}
+
+// Auto-rellena fechas consecutivas desde la primera fecha
+function autoFillItinerarioFechas(){
+    const rows=document.querySelectorAll('#itinerarioContainer tr');
+    if(!rows.length)return;
+    const first=rows[0].querySelector('.it-dia');
+    if(!first||!first.value){alert('Ingrese la fecha en la primera fila antes de auto-rellenar.');return;}
+    const baseDate=new Date(first.value+'T12:00:00');
+    rows.forEach((r,i)=>{
+        if(i===0)return;
+        const dateInput=r.querySelector('.it-dia');
+        if(dateInput){
+            const nd=new Date(baseDate);nd.setDate(baseDate.getDate()+i);
+            dateInput.value=nd.toISOString().split('T')[0];
+        }
+    });
+    updatePreview();
+}
+
+// Paste desde Excel (tab-separated, newline por fila)
+function handleItinerarioPaste(e,el){
+    const cd=(e.clipboardData||window.clipboardData);
+    if(!cd)return;
+    const text=cd.getData('text');
+    if(!text||text.indexOf('\t')===-1&&text.indexOf('\n')===-1)return;
+    e.preventDefault();
+    const rows=text.split(/\r?\n/).filter(r=>r.length);
+    // Obtener fila actual
+    const currentTr=el.closest('tr');
+    const tbody=document.getElementById('itinerarioContainer');
+    const allRows=Array.from(tbody.querySelectorAll('tr'));
+    const startIdx=allRows.indexOf(currentTr);
+    rows.forEach((rowText,i)=>{
+        const cells=rowText.split('\t');
+        let targetTr=allRows[startIdx+i];
+        if(!targetTr){targetTr=addItinerario('','');}
+        const dateInput=targetTr.querySelector('.it-dia');
+        const actInput=targetTr.querySelector('.it-act');
+        // Intentar parsear fecha en primera columna
+        if(cells[0]){
+            const parsed=parseFechaFlexible(cells[0]);
+            if(parsed)dateInput.value=parsed;
+            else actInput.value=cells[0]; // si no es fecha, va a actividad
+        }
+        if(cells[1])actInput.value=cells[1];
+    });
+    updatePreview();
+}
+
+// Parsea fechas en varios formatos: "23-jun", "23/06/2026", "2026-06-23", "23 jun", etc.
+function parseFechaFlexible(s){
+    if(!s)return null;s=s.trim();
+    // ISO YYYY-MM-DD
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+    // DD/MM/YYYY or DD-MM-YYYY
+    let m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if(m)return`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    // DD-mes or DD mes (ej: 23-jun, 23 junio)
+    const meses={ene:'01',feb:'02',mar:'03',abr:'04',may:'05',jun:'06',jul:'07',ago:'08',sep:'09',oct:'10',nov:'11',dic:'12',enero:'01',febrero:'02',marzo:'03',abril:'04',mayo:'05',junio:'06',julio:'07',agosto:'08',septiembre:'09',octubre:'10',noviembre:'11',diciembre:'12'};
+    m=s.match(/^(\d{1,2})[\s\-\/]+([a-záéíóú]+)\.?(?:[\s\-\/]+(\d{4}))?$/i);
+    if(m){
+        const mesKey=m[2].toLowerCase().slice(0,3);
+        const mes=meses[mesKey]||meses[m[2].toLowerCase()];
+        if(mes){const year=m[3]||new Date().getFullYear();return`${year}-${mes}-${m[1].padStart(2,'0')}`;}
+    }
+    return null;
+}
+
+// Formatea fecha ISO a "23-jun" para mostrar en cotización
+function formatFechaCorta(iso){
+    if(!iso)return'';
+    const meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    const d=new Date(iso+'T12:00:00');
+    return`${d.getDate()}-${meses[d.getMonth()]}`;
+}
+
+// ===== PUERTOS CRUCERO (5 columnas) =====
+function addPuerto(fecha,puerto,llegada,salida,actividad){
+    const c=document.getElementById('puertosContainer');const tr=document.createElement('tr');
+    tr.innerHTML=`<td><input type="text" value="${esc(fecha||'')}" placeholder="02-ene" oninput="updatePreview()"></td><td><input type="text" value="${esc(puerto||'')}" placeholder="Col\u00f3n, Panam\u00e1" oninput="updatePreview()"></td><td><input type="text" value="${esc(llegada||'')}" placeholder="-" style="width:60px;" oninput="updatePreview()"></td><td><input type="text" value="${esc(salida||'')}" placeholder="4:00 PM" style="width:60px;" oninput="updatePreview()"></td><td><input type="text" value="${esc(actividad||'')}" placeholder="Embarque" style="width:70px;" oninput="updatePreview()"></td><td><button class="btn-icon remove" onclick="this.closest('tr').remove();updatePreview();">&times;</button></td>`;
+    c.appendChild(tr);updatePreview();
+}
+
+// ===== LOGO / WATERMARK =====
+function handleLogoUpload(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=function(ev){logoDataUrl=ev.target.result;updatePreview();};r.readAsDataURL(f);}
+function handleWatermarkUpload(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=function(ev){watermarkDataUrl=ev.target.result;document.getElementById('watermarkThumb').src=watermarkDataUrl;document.getElementById('watermarkPreviewThumb').style.display='';updatePreview();};r.readAsDataURL(f);}
+
+// ===== ADJUNTOS =====
+function handleAdjuntoUpload(e){const files=e.target.files;if(!files.length)return;const cat=document.getElementById('adjuntoCategoria').value;const desc=document.getElementById('adjuntoDescripcion').value;let loaded=0;Array.from(files).forEach((f,i)=>{const r=new FileReader();r.onload=function(ev){adjuntos.push({id:Date.now()+'_'+i,categoria:cat,descripcion:desc||f.name,dataUrl:ev.target.result});loaded++;if(loaded===files.length){renderAdjuntos();updatePreview();document.getElementById('adjuntoDescripcion').value='';e.target.value='';}};r.readAsDataURL(f);});}
+function removeAdjunto(id){adjuntos=adjuntos.filter(a=>a.id!==id);renderAdjuntos();updatePreview();}
+function renderAdjuntos(){const g=document.getElementById('adjuntosGrid');if(!adjuntos.length){g.innerHTML='';return;}g.innerHTML=adjuntos.map(a=>`<div class="adjunto-card"><img src="${a.dataUrl}" alt="${esc(a.descripcion)}"><div class="adjunto-info"><div class="adjunto-cat">${esc(a.categoria)}</div><div class="adjunto-label" title="${esc(a.descripcion)}">${esc(a.descripcion)}</div></div><button class="adjunto-remove" onclick="removeAdjunto('${a.id}')">&times;</button></div>`).join('');}
+
+// ===== DRAG & DROP =====
+function initDrag(c){
+if(!c)return;
+let isDraggingHandle=false;
+// Use mousedown on handle to flag that drag started from handle
+c.addEventListener('mousedown',function(e){
+    isDraggingHandle=!!e.target.closest('.drag-handle');
+});
+c.addEventListener('dragstart',function(e){
+    if(!isDraggingHandle){e.preventDefault();return;}
+    const it=e.target.closest('.service-item');
+    if(!it){e.preventDefault();return;}
+    dragEl=it;
+    it.classList.add('dragging');
+    e.dataTransfer.effectAllowed='move';
+    e.dataTransfer.setData('text/plain','drag');
+    // Make drag image the whole row
+    e.dataTransfer.setDragImage(it,20,15);
+});
+c.addEventListener('dragend',function(){
+    isDraggingHandle=false;
+    if(dragEl){dragEl.classList.remove('dragging');dragEl=null;}
+    c.querySelectorAll('.service-item').forEach(el=>el.classList.remove('drag-over'));
+    updatePreview();
+});
+c.addEventListener('dragover',function(e){
+    e.preventDefault();
+    e.dataTransfer.dropEffect='move';
+    const it=e.target.closest('.service-item');
+    if(!it||it===dragEl)return;
+    c.querySelectorAll('.service-item').forEach(el=>el.classList.remove('drag-over'));
+    // Insert before or after based on mouse position
+    const r=it.getBoundingClientRect();
+    const midY=r.top+r.height/2;
+    if(e.clientY<midY){it.classList.add('drag-over');}
+    else{it.classList.add('drag-over');}
+});
+c.addEventListener('dragleave',function(e){
+    const it=e.target.closest('.service-item');
+    if(it)it.classList.remove('drag-over');
+});
+c.addEventListener('drop',function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    if(!dragEl)return;
+    const it=e.target.closest('.service-item');
+    if(!it||it===dragEl){return;}
+    it.classList.remove('drag-over');
+    const r=it.getBoundingClientRect();
+    const midY=r.top+r.height/2;
+    if(e.clientY<midY){c.insertBefore(dragEl,it);}
+    else{c.insertBefore(dragEl,it.nextSibling);}
+    // Force preview update
+    setTimeout(updatePreview,50);
+});
+}
+function initAllDrag(){['serviciosContainer','noIncluyeContainer','politicasContainer','hospedajeContainer','itinerarioContainer'].forEach(id=>initDrag(document.getElementById(id)));}
+
+// ===== ENCABEZADOS =====
+function agregarPais(){const inp=document.getElementById('nuevoPaisInput');const n=inp.value.trim();if(!n){alert('Ingrese el nombre del pa\u00eds.');return;}const enc=getEncabezados();if(enc[n]){alert('Pa\u00eds ya existe.');return;}enc[n]={};saveEncabezados(enc);inp.value='';renderEncabezados();populatePaisSelect();}
+function eliminarPais(p){if(!confirm('\u00bfEliminar "'+p+'" y todos sus destinos?'))return;const enc=getEncabezados();delete enc[p];saveEncabezados(enc);renderEncabezados();populatePaisSelect();}
+function agregarDestino(p){const n=prompt('Nombre del destino:');if(!n||!n.trim())return;const enc=getEncabezados();if(!enc[p])enc[p]={};if(enc[p][n.trim()]){alert('Destino ya existe.');return;}enc[p][n.trim()]=null;saveEncabezados(enc);renderEncabezados();populatePaisSelect();}
+function eliminarDestino(p,d){if(!confirm('\u00bfEliminar "'+d+'"?'))return;const enc=getEncabezados();if(enc[p])delete enc[p][d];saveEncabezados(enc);renderEncabezados();populatePaisSelect();}
+function subirImagenDestino(p,d){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=function(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=function(ev){const enc=getEncabezados();if(!enc[p])enc[p]={};enc[p][d]=ev.target.result;saveEncabezados(enc);renderEncabezados();updatePreview();};r.readAsDataURL(f);};inp.click();}
+function getDestinoImage(p,d){const enc=getEncabezados();return(enc[p]&&enc[p][d])||null;}
+function renderEncabezados(){const enc=getEncabezados();const c=document.getElementById('paisesContainer');const paises=Object.keys(enc);if(!paises.length){c.innerHTML='<div class="grid-empty"><h3>Sin pa\u00edses</h3><p>Agregue un pa\u00eds arriba para comenzar.</p></div>';return;}c.innerHTML=paises.map(p=>{const ds=Object.keys(enc[p]);return`<div class="enc-pais-section"><div class="enc-pais-header" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'"><h3>${esc(p)} (${ds.length})</h3><button class="btn btn-sm btn-danger" onclick="event.stopPropagation();eliminarPais('${esc(p).replace(/'/g,"\\'")}')">Eliminar</button></div><div class="enc-pais-body"><div class="enc-destinos-grid">${ds.map(d=>{const img=enc[p][d];return`<div class="enc-destino-card"><div class="enc-img-preview">${img?`<img src="${img}">`:'Sin imagen'}</div><div class="enc-destino-info"><div class="enc-destino-name">${esc(d)}</div><div class="enc-destino-actions"><button class="btn btn-sm btn-primary" onclick="subirImagenDestino('${esc(p).replace(/'/g,"\\'")}','${esc(d).replace(/'/g,"\\'")}');">${img?'Cambiar':'Subir'}</button><button class="btn btn-sm btn-danger" onclick="eliminarDestino('${esc(p).replace(/'/g,"\\'")}','${esc(d).replace(/'/g,"\\'")}');">&times;</button></div></div></div>`;}).join('')}<div class="enc-add-destino" onclick="agregarDestino('${esc(p).replace(/'/g,"\\'")}')"><span class="plus">+</span><span style="font-size:0.78rem;">Destino</span></div></div></div></div>`;}).join('');}
+function populatePaisSelect(){const enc=getEncabezados();const sel=document.getElementById('paisSelect');const cur=sel.value;sel.innerHTML='<option value="">-- Pa\u00eds --</option>';Object.keys(enc).forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o);});if(cur&&enc[cur])sel.value=cur;onPaisChange();}
+function onPaisChange(){const p=document.getElementById('paisSelect').value;const enc=getEncabezados();const ds=document.getElementById('destinoSelect');const di=document.getElementById('destino');ds.innerHTML='<option value="">-- Destino --</option>';if(p&&enc[p])Object.keys(enc[p]).forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;ds.appendChild(o);});const co=document.createElement('option');co.value='__custom';co.textContent='Escribir manualmente...';ds.appendChild(co);ds.style.display='';di.style.display='none';onDestinoSelect();}
+function onDestinoSelect(){const ds=document.getElementById('destinoSelect');const di=document.getElementById('destino');const pv=document.getElementById('destinoPreviewImg');const pi=document.getElementById('destinoPreviewImgTag');const p=document.getElementById('paisSelect').value;if(ds.value==='__custom'){di.style.display='';ds.style.display='none';di.focus();selectedHeaderImg=null;pv.classList.remove('visible');}else if(ds.value){di.value=ds.value;di.style.display='none';const img=getDestinoImage(p,ds.value);selectedHeaderImg=img;if(img){pi.src=img;pv.classList.add('visible');}else{pv.classList.remove('visible');}}else{di.style.display='none';selectedHeaderImg=null;pv.classList.remove('visible');}updatePreview();}
+
+// ===== DATE =====
+function formatDateRange(s,e){if(!s||!e)return'';const sd=new Date(s+'T12:00:00'),ed=new Date(e+'T12:00:00');const m=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];if(sd.getMonth()===ed.getMonth()&&sd.getFullYear()===ed.getFullYear())return`${sd.getDate()} al ${ed.getDate()} de ${m[sd.getMonth()]} ${sd.getFullYear()}`;return`${sd.getDate()} de ${m[sd.getMonth()]} al ${ed.getDate()} de ${m[ed.getMonth()]} ${ed.getFullYear()}`;}
+
+// ===== COLLECT FORM DATA =====
+function collectFormData(){const data={formato:currentFormat,tipoCliente,clienteNombre:document.getElementById('clienteNombre').value,clienteTelefono:document.getElementById('clienteTelefono').value,clienteEmail:document.getElementById('clienteEmail').value,empresaNombre:document.getElementById('empresaNombre').value,empresaContacto:document.getElementById('empresaContacto').value,empresaTelefono:document.getElementById('empresaTelefono').value,empresaEmail:document.getElementById('empresaEmail').value,pais:document.getElementById('paisSelect').value,destinoSelect:document.getElementById('destinoSelect').value,destino:document.getElementById('destinoSelect').value&&document.getElementById('destinoSelect').value!=='__custom'?document.getElementById('destinoSelect').value:document.getElementById('destino').value,fechaInicio:document.getElementById('fechaInicio').value,fechaFin:document.getElementById('fechaFin').value,alerta:document.getElementById('alertaDestino').value,infoDestino:document.getElementById('infoDestino').value,moneda:document.getElementById('moneda').value,precioReserva:document.getElementById('precioReserva').value,precioReservaNino:document.getElementById('precioReservaNino').value,precioReservaBebe:document.getElementById('precioReservaBebe').value,razonSocial:document.getElementById('razonSocial').value,cedulaEmpresa:document.getElementById('cedulaEmpresa').value,encargado:document.getElementById('encargado').value,adjuntos:adjuntos.map(a=>({id:a.id,categoria:a.categoria,descripcion:a.descripcion,dataUrl:a.dataUrl}))};
+data.servicios=[];document.querySelectorAll('#serviciosContainer .service-item').forEach(it=>{const cb=it.querySelector('input[type="checkbox"]'),tx=it.querySelector('input[type="text"]').value;if(cb.checked&&tx.trim())data.servicios.push(tx);});
+data.opciones=[];document.querySelectorAll('#opcionesBody tr.opcion-row').forEach(tr=>{const nombre=tr.querySelector('.op-nombre')?.value||'';const adulto=tr.querySelector('.op-adulto')?.value||'';const nino=tr.querySelector('.op-nino')?.value||'';const bebe=tr.querySelector('.op-bebe')?.value||'';if(nombre.trim()){let calc=null;try{calc=JSON.parse(tr.dataset.calc||'null');}catch(e){}data.opciones.push({nombre,adulto,nino,bebe,calc,manualOverride:tr.dataset.manualOverride==='1'});}});
+data.noIncluye=[];document.querySelectorAll('#noIncluyeContainer .service-item').forEach(it=>{const t=it.querySelector('input[type="text"]').value;if(t.trim())data.noIncluye.push(t);});
+data.politicas=[];document.querySelectorAll('#politicasContainer .service-item').forEach(it=>{const t=it.querySelector('textarea').value;if(t.trim())data.politicas.push(t);});
+data.cuentas=[];document.querySelectorAll('#cuentasContainer > div').forEach(div=>{const tipo=div.querySelector('.cuenta-tipo')?.value||'';if(tipo.trim())data.cuentas.push({tipo,numero:div.querySelector('.cuenta-numero')?.value||'',iban:div.querySelector('.cuenta-iban')?.value||'',nota:div.querySelector('.cuenta-nota')?.value||''});});
+// Hospedaje incluido (rango de fechas)
+data.hospedajes=[];document.querySelectorAll('#hospedajeContainer .service-item').forEach(it=>{const hotel=it.querySelector('.h-hotel')?.value||'';const fi=it.querySelector('.h-fi')?.value||'';const ff=it.querySelector('.h-ff')?.value||'';if(hotel.trim())data.hospedajes.push({hotel,fechaInicio:fi,fechaFin:ff});});
+// Itinerario propuesto (tabla)
+data.itinerario=[];document.querySelectorAll('#itinerarioContainer tr').forEach(tr=>{const dia=tr.querySelector('.it-dia')?.value||'';const act=tr.querySelector('.it-act')?.value||'';if(dia.trim()||act.trim())data.itinerario.push({dia,actividad:act});});
+// Crucero
+if(currentFormat==='crucero'){data.lineaCrucero=document.getElementById('lineaCrucero').value;data.nombreBarco=document.getElementById('nombreBarco').value;data.puertoSalida=document.getElementById('puertoSalida').value;data.duracionCrucero=document.getElementById('duracionCrucero').value;data.planPagos=document.getElementById('planPagos').value;data.cruceroRecomendaciones=document.getElementById('cruceroRecomendaciones').value;data.puertos=[];document.querySelectorAll('#puertosContainer tr').forEach(tr=>{const inputs=tr.querySelectorAll('input');if(inputs.length>=5&&(inputs[0].value.trim()||inputs[1].value.trim()))data.puertos.push({fecha:inputs[0].value,puerto:inputs[1].value,llegada:inputs[2].value,salida:inputs[3].value,actividad:inputs[4].value});});}
+return data;}
+
+// ===== HEADER HTML =====
+function headerHtml(){
+if(selectedHeaderImg){
+    // Imagen de encabezado ya incluye todo el texto/logo, solo mostrar la imagen
+    return`<div class="cot-header has-image"><img class="header-bg-img" src="${selectedHeaderImg}" alt=""></div>`;
+}
+const logo=logoDataUrl?`<img src="${logoDataUrl}" alt="Logo">`:'Logo<br>Deseos Viajeros';
+const ag=cfgGet().agencyInfo;
+const infoLines=[ag.telefono?'Tel. '+esc(ag.telefono):'',ag.nombre?esc(ag.nombre):'',ag.cedula?esc(ag.cedula):''].filter(Boolean).join('<br>');
+const sloganHtml=(ag.slogan||'Aqu\u00ed inicia tu viaje...').split(/\s+/).reduce((acc,w,i,arr)=>{if(i===Math.ceil(arr.length/2))acc+='<br>';return acc+(i?' ':'')+w;},'');
+return`<div class="cot-header"><div class="cot-header-content"><div class="cot-header-left"><h2>Cotizaci\u00f3n</h2><div class="company-info">${infoLines||'&nbsp;'}</div><span class="badge">Agencia certificada</span></div><div class="cot-header-right"><div class="slogan">${sloganHtml}</div><div class="cot-logo-placeholder">${logo}</div></div></div></div>`;}
+
+// ===== UPDATE PREVIEW =====
+function updatePreview(){const d=collectFormData();const fechas=formatDateRange(d.fechaInicio,d.fechaFin);const curr=d.moneda==='USD'?'$':d.moneda==='EUR'?'\u20ac':'\u20a1';const colLabel=d.formato==='crucero'?'Tipo de Cabina':'Paquete';
+let clienteHtml='';if(d.tipoCliente==='persona'&&d.clienteNombre){clienteHtml=`<div class="cot-cliente-box"><p><strong>Cliente:</strong> ${esc(d.clienteNombre)}</p>${d.clienteTelefono?`<p><strong>Tel:</strong> ${esc(d.clienteTelefono)}</p>`:''}${d.clienteEmail?`<p><strong>Email:</strong> ${esc(d.clienteEmail)}</p>`:''}</div>`;}else if(d.tipoCliente==='empresa'&&d.empresaNombre){clienteHtml=`<div class="cot-cliente-box"><p><strong>Empresa:</strong> ${esc(d.empresaNombre)}</p>${d.empresaContacto?`<p><strong>Contacto:</strong> ${esc(d.empresaContacto)}</p>`:''}${d.empresaTelefono?`<p><strong>Tel:</strong> ${esc(d.empresaTelefono)}</p>`:''}${d.empresaEmail?`<p><strong>Email:</strong> ${esc(d.empresaEmail)}</p>`:''}</div>`;}
+// Crucero info
+let cruceroHtml='';if(d.formato==='crucero'&&(d.lineaCrucero||d.nombreBarco)){
+const pr=(d.puertos||[]).map(p=>`<tr><td>${esc(p.fecha||'')}</td><td>${esc(p.puerto||'')}</td><td>${esc(p.llegada||'-')}</td><td>${esc(p.salida||'-')}</td><td>${esc(p.actividad||'')}</td></tr>`).join('');
+cruceroHtml=`<div class="cot-cruise-info"><h4>Detalle del paquete</h4><div class="cot-cruise-grid">${d.lineaCrucero?`<div class="info-item"><strong>Naviera:</strong> ${esc(d.lineaCrucero)}</div>`:''}${d.nombreBarco?`<div class="info-item"><strong>Barco:</strong> ${esc(d.nombreBarco)}</div>`:''}${d.puertoSalida?`<div class="info-item"><strong>Puerto de salida:</strong> ${esc(d.puertoSalida)}</div>`:''}${d.duracionCrucero?`<div class="info-item"><strong>Fecha de salida:</strong> ${esc(d.duracionCrucero)}</div>`:''}</div></div>${pr?`<div class="cot-section"><h4>ITINERARIO</h4><table class="cruise-itinerary-table"><thead><tr><th>Fecha</th><th>Puerto de escala</th><th>Llegada</th><th>Salida</th><th>Actividad</th></tr></thead><tbody>${pr}</tbody></table></div>`:''}`;}
+// Hospedaje incluido (rango fechas formateado)
+let hospedajeHtml='';if((d.hospedajes||[]).length){hospedajeHtml=`<div class="cot-section"><h4>Hospedaje incluido:</h4>${d.hospedajes.map(h=>{const rango=formatHospedajeRange(h.fechaInicio,h.fechaFin);return`<p style="font-size:0.83rem;margin-bottom:2px;">${esc(h.hotel)}${rango?' '+esc(rango):''}</p>`;}).join('')}</div>`;}
+// Itinerario propuesto (fechas formateadas)
+let itinerarioHtml='';if((d.itinerario||[]).length){itinerarioHtml=`<div class="cot-section"><h4>Itinerario propuesto</h4><table class="cruise-itinerary-table"><thead><tr><th style="width:80px;">D\u00eda</th><th>Itinerario propuesto</th></tr></thead><tbody>${d.itinerario.map(i=>`<tr><td>${esc(formatFechaCorta(i.dia)||i.dia)}</td><td>${esc(i.actividad)}</td></tr>`).join('')}</tbody></table></div>`;}
+// Plan de pagos y recomendaciones (Crucero)
+let planPagosHtml='';if(d.planPagos){planPagosHtml=`<div class="cot-section"><h4>Plan de Pagos:</h4><p style="font-size:0.83rem;white-space:pre-line;">${esc(d.planPagos)}</p></div>`;}
+let recomHtml='';if(d.cruceroRecomendaciones){recomHtml=`<div class="cot-dest-info"><p style="font-style:italic;">${esc(d.cruceroRecomendaciones)}</p></div>`;}
+const wmHtml=watermarkDataUrl?`<div class="cot-watermark"><img src="${watermarkDataUrl}" alt=""></div>`:'';
+const hoy=new Date();const fechaEmision=hoy.toLocaleDateString('es-CR',{day:'2-digit',month:'long',year:'numeric'});
+const preview=document.getElementById('previewPanel');
+preview.innerHTML=`
+<div class="cot-page">${headerHtml()}${wmHtml}<div class="cot-body">${clienteHtml}<div class="cot-detail-header"><h3>Detalle del paquete</h3><p><strong>Destino:</strong> ${esc(d.destino||'Destino')}</p>${fechas?`<p><strong>Fechas:</strong> ${esc(fechas)}.</p>`:''}</div>${cruceroHtml}${d.servicios.length?`<div class="cot-section"><h4>El paquete incluye:</h4><ul class="cot-services-list">${d.servicios.map(s=>`<li>${esc(s)}</li>`).join('')}</ul></div>`:''}${hospedajeHtml}${d.opciones.length?`<div class="cot-pricing"><div class="cot-pricing-title">Tarifas por persona en ${d.moneda}</div><table class="cot-price-table"><thead><tr><th>${colLabel}</th><th>Precio por Adulto</th><th>Ni\u00f1o 2-11</th><th>Ni\u00f1o 0-23m</th></tr></thead><tbody>${d.opciones.map(o=>`<tr><td>${esc(o.nombre)}</td><td class="price">${o.adulto?curr+o.adulto:'-'}</td><td class="price">${o.nino&&o.nino!=='-'?curr+o.nino:'-'}</td><td class="price">${o.bebe&&o.bebe!=='-'?curr+o.bebe:'-'}</td></tr>`).join('')}${d.precioReserva?`<tr style="background:rgba(232,148,26,0.08);"><td><strong>Reserva</strong></td><td class="price">${curr}${d.precioReserva}</td><td class="price">${d.precioReservaNino?curr+d.precioReservaNino:'-'}</td><td class="price">${d.precioReservaBebe?curr+d.precioReservaBebe:'-'}</td></tr>`:''}</tbody></table><p class="cot-price-note">***Precios en ${d.moneda} por persona**</p></div>`:''}${d.alerta?`<div class="cot-alert">${esc(d.alerta)}</div>`:''}${d.infoDestino?`<div class="cot-dest-info"><p>${esc(d.infoDestino)}</p></div>`:''}${planPagosHtml}${recomHtml}</div></div>
+<div class="cot-page">${headerHtml()}${wmHtml}<div class="cot-body">${itinerarioHtml}${d.noIncluye.length?`<div class="cot-section cot-no-incluye"><h4>${d.formato==='crucero'?'El Crucero No Incluye:':'El paquete no incluye:'}</h4>${d.noIncluye.map(s=>`<p>${esc(s)}</p>`).join('')}</div>`:''}${d.politicas.length?`<div class="cot-section cot-politicas"><h4>Pol\u00edticas de viaje:</h4><ol>${d.politicas.map(p=>`<li>${esc(p)}</li>`).join('')}</ol></div>`:''}</div></div>
+<div class="cot-page">${headerHtml()}${wmHtml}<div class="cot-body"><div class="cot-bank-section"><h4>Cuentas autorizadas para pagos</h4><p class="company-legal">${esc(d.razonSocial)}</p><p class="cedula">C\u00e9dula: ${esc(d.cedulaEmpresa)}</p><div class="cot-bank-details">${d.cuentas.map(c=>`<div class="cot-bank-item"><p class="bank-name">${esc(c.tipo)}</p><p>${esc(c.numero)}</p>${c.iban?`<p>IBAN: ${esc(c.iban)}</p>`:''}${c.nota?`<p class="note">${esc(c.nota)}</p>`:''}</div>`).join('')}</div></div><div class="cot-footer-slogan">\u00a1Nuestro deseo es hacer de tu viaje la mejor experiencia!</div><div class="cot-fecha-emision">${d.encargado?`<p style="margin-bottom:3px;"><strong>Elaborada por:</strong> ${esc(d.encargado)}</p>`:''}<p>Fecha de emisi\u00f3n: ${fechaEmision}</p></div></div></div>
+${adjuntos.length?`<div class="cot-page cot-adjuntos-page" style="min-height:auto;"><div class="internal-badge">USO INTERNO - NO ENVIAR AL CLIENTE</div><div class="cot-adjuntos-body"><h3>Adjuntos de apoyo</h3><div class="adjuntos-preview-grid">${adjuntos.map(a=>`<div class="adjunto-preview-card"><img src="${a.dataUrl}" alt="${esc(a.descripcion)}" onclick="openImgLightbox('${a.id}','${esc(a.categoria)}','${esc(a.descripcion).replace(/'/g,"\\'")}')"><div class="adjunto-preview-info"><div class="adjunto-preview-cat">${esc(a.categoria)}</div><div class="adjunto-preview-label">${esc(a.descripcion)}</div></div></div>`).join('')}</div></div></div>`:''}`;}
+
+// ===== HISTORIAL =====
+function guardarCotizacion(){const data=collectFormData();if(!data.destino){alert('Ingrese un destino.');return;}const hist=getHistorial();const clienteId=autoCreateCliente(data);const entry={id:editingId||Date.now().toString(),fecha:new Date().toISOString(),data,aceptada:false,clienteId};if(editingId){const idx=hist.findIndex(h=>h.id===editingId);if(idx>=0){entry.aceptada=hist[idx].aceptada||false;hist[idx]=entry;}else hist.unshift(entry);editingId=null;}else{hist.unshift(entry);}saveHistorial(hist);updateBadges();alert('Cotizaci\u00f3n guardada.');}
+
+function cargarCotizacion(id){const hist=getHistorial();const entry=hist.find(h=>h.id===id);if(!entry)return;const d=entry.data;editingId=id;
+switchFormat(d.formato||'america');switchTipoCliente(d.tipoCliente||'persona');
+document.getElementById('clienteNombre').value=d.clienteNombre||'';document.getElementById('clienteTelefono').value=d.clienteTelefono||'';document.getElementById('clienteEmail').value=d.clienteEmail||'';document.getElementById('empresaNombre').value=d.empresaNombre||'';document.getElementById('empresaContacto').value=d.empresaContacto||'';document.getElementById('empresaTelefono').value=d.empresaTelefono||'';document.getElementById('empresaEmail').value=d.empresaEmail||'';
+populatePaisSelect();if(d.pais){document.getElementById('paisSelect').value=d.pais;onPaisChange();if(d.destinoSelect&&d.destinoSelect!=='__custom'){document.getElementById('destinoSelect').value=d.destinoSelect;onDestinoSelect();}else{document.getElementById('destinoSelect').value='__custom';onDestinoSelect();document.getElementById('destino').value=d.destino||'';}}else{document.getElementById('destino').style.display='';document.getElementById('destinoSelect').style.display='none';document.getElementById('destino').value=d.destino||'';selectedHeaderImg=null;}
+document.getElementById('fechaInicio').value=d.fechaInicio||'';document.getElementById('fechaFin').value=d.fechaFin||'';document.getElementById('alertaDestino').value=d.alerta||'';document.getElementById('infoDestino').value=d.infoDestino||'';document.getElementById('moneda').value=d.moneda||'USD';document.getElementById('precioReserva').value=d.precioReserva||'';document.getElementById('precioReservaNino').value=d.precioReservaNino||'';document.getElementById('precioReservaBebe').value=d.precioReservaBebe||'';document.getElementById('razonSocial').value=d.razonSocial||'Deseos Viajeros MYX SRL';document.getElementById('cedulaEmpresa').value=d.cedulaEmpresa||'3-102-862093';document.getElementById('encargado').value=d.encargado||'';
+adjuntos=(d.adjuntos||[]).map(a=>({id:a.id,categoria:a.categoria,descripcion:a.descripcion,dataUrl:a.dataUrl}));renderAdjuntos();
+const sc=document.getElementById('serviciosContainer');sc.innerHTML='';(d.servicios||[]).forEach(s=>addServicioItem(s,true));
+const ob=document.getElementById('opcionesBody');ob.innerHTML='';(d.opciones||[]).forEach(o=>{
+    const opId=addOpcion(o);
+    if(o.manualOverride){
+        const tr=document.querySelector(`tr.opcion-row[data-opcion-id="${opId}"]`);
+        if(tr){tr.dataset.manualOverride='1';tr.classList.add('row-manual-override');}
+    }
+});
+loadNoIncluye(d.noIncluye||cfgGet().noIncluye[d.formato||'america']);loadPoliticas(d.politicas||cfgGet().politicas[d.formato||'america']);loadCuentas(d.cuentas||cfgGet().cuentas);
+// Hospedaje (rango fechas, compatibilidad con formato viejo .fechas)
+const hc=document.getElementById('hospedajeContainer');hc.innerHTML='';
+(d.hospedajes||[]).forEach(h=>addHospedaje(h.hotel,h.fechaInicio||'',h.fechaFin||''));
+// Itinerario
+const ic=document.getElementById('itinerarioContainer');ic.innerHTML='';
+(d.itinerario||[]).forEach(i=>{const dia=i.dia&&/^\d{4}-\d{2}-\d{2}$/.test(i.dia)?i.dia:(parseFechaFlexible(i.dia)||'');addItinerario(dia,i.actividad);});
+// Crucero
+if(d.formato==='crucero'){document.getElementById('lineaCrucero').value=d.lineaCrucero||'';document.getElementById('nombreBarco').value=d.nombreBarco||'';document.getElementById('puertoSalida').value=d.puertoSalida||'';document.getElementById('duracionCrucero').value=d.duracionCrucero||'';document.getElementById('planPagos').value=d.planPagos||'';document.getElementById('cruceroRecomendaciones').value=d.cruceroRecomendaciones||'';const pc=document.getElementById('puertosContainer');pc.innerHTML='';(d.puertos||[]).forEach(p=>addPuerto(p.fecha,p.puerto,p.llegada,p.salida,p.actividad));}
+nav('editor');updatePreview();}
+
+function toggleAceptada(id){const hist=getHistorial();const entry=hist.find(h=>h.id===id);if(!entry)return;if(entry.aceptada){if(!confirm('\u00bfDesmarcar esta cotizaci\u00f3n como aceptada? Se eliminar\u00e1 la venta asociada.'))return;entry.aceptada=false;const ventas=getVentas().filter(v=>v.cotizacionId!==id);saveVentas(ventas);}else{entry.aceptada=true;crearVenta(entry);}saveHistorial(hist);renderHistorial();updateBadges();}
+
+function renderHistorial(){const hist=getHistorial();const grid=document.getElementById('historialGrid');const search=document.getElementById('historialSearch').value.toLowerCase();const filterA=document.getElementById('historialFilterAceptada').value;
+const filtered=hist.filter(h=>{const d=h.data;const text=[d.destino,d.clienteNombre,d.empresaNombre,d.empresaContacto,d.formato,d.encargado].join(' ').toLowerCase();const matchSearch=!search||text.includes(search);const matchFilter=!filterA||(filterA==='aceptada'&&h.aceptada)||(filterA==='pendiente'&&!h.aceptada);return matchSearch&&matchFilter;});
+if(!filtered.length){grid.innerHTML=`<div class="grid-empty"><h3>${search||filterA?'Sin resultados':'Sin cotizaciones'}</h3><p>Cree una cotizaci\u00f3n y gu\u00e1rdela.</p></div>`;return;}
+grid.innerHTML=filtered.map(h=>{const d=h.data;const cl=d.tipoCliente==='empresa'?(d.empresaNombre||'Sin empresa'):(d.clienteNombre||'Sin nombre');const tl=d.tipoCliente==='empresa'?'Empresa':'Persona';const tc=d.tipoCliente==='empresa'?'empresa':'persona';const fe=new Date(h.fecha).toLocaleDateString('es-CR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});const fl=(d.formato||'america')==='america'?'Am\u00e9rica':(d.formato==='europa'?'Europa/Asia':'Crucero');
+return`<div class="hist-card${h.aceptada?' aceptada':''}"><div style="display:flex;justify-content:space-between;align-items:start;"><div class="hist-destino">${esc(d.destino||'Sin destino')}</div><div style="display:flex;gap:4px;align-items:center;"><span class="hist-formato">${fl}</span>${h.aceptada?'<span class="badge-aceptada">ACEPTADA</span>':''}</div></div><div class="hist-cliente"><span class="hist-tipo ${tc}">${tl}</span> ${esc(cl)}</div>${d.encargado?`<div class="hist-fecha" style="color:var(--primary-dark);font-weight:600;">Encargado: ${esc(d.encargado)}</div>`:''}${d.fechaInicio?`<div class="hist-fecha">Viaje: ${formatDateRange(d.fechaInicio,d.fechaFin)}</div>`:''}<div class="hist-fecha">Creada: ${fe}</div><div class="hist-card-actions"><button class="btn btn-sm btn-primary" onclick="cargarCotizacion('${h.id}')">Editar</button><button class="btn btn-sm btn-warning" onclick="duplicarCotizacion('${h.id}')">Duplicar</button><button class="btn btn-sm ${h.aceptada?'btn-ghost':'btn-success'}" onclick="toggleAceptada('${h.id}')">${h.aceptada?'Desmarcar':'Aceptada'}</button><button class="btn btn-sm btn-danger" onclick="eliminarCotizacion('${h.id}')">Eliminar</button></div></div>`;}).join('');}
+
+function duplicarCotizacion(id){const hist=getHistorial();const e=hist.find(h=>h.id===id);if(!e)return;const copy=JSON.parse(JSON.stringify(e));copy.id=Date.now().toString();copy.fecha=new Date().toISOString();copy.data.destino+=' (copia)';copy.aceptada=false;hist.unshift(copy);saveHistorial(hist);renderHistorial();updateBadges();}
+function eliminarCotizacion(id){if(!confirm('\u00bfEliminar cotizaci\u00f3n?'))return;const hist=getHistorial().filter(h=>h.id!==id);saveHistorial(hist);const ventas=getVentas().filter(v=>v.cotizacionId!==id);saveVentas(ventas);renderHistorial();updateBadges();}
+function limpiarHistorial(){if(!confirm('\u00bfEliminar TODAS las cotizaciones?'))return;saveHistorial([]);renderHistorial();updateBadges();}
+
+// ===== VENTAS =====
+function crearVenta(cotEntry){const ventas=getVentas();if(ventas.find(v=>v.cotizacionId===cotEntry.id))return;const d=cotEntry.data;const v={id:Date.now().toString(),cotizacionId:cotEntry.id,clienteId:cotEntry.clienteId||null,destino:d.destino,clienteNombre:d.tipoCliente==='empresa'?(d.empresaNombre||''):(d.clienteNombre||''),fechaInicio:d.fechaInicio,fechaFin:d.fechaFin,encargado:d.encargado,estado:'pendiente',checklist:defaultChecklistItems.map((t,i)=>({id:Date.now()+'_'+i,texto:t,completado:false})),fechaCreacion:new Date().toISOString()};ventas.unshift(v);saveVentas(ventas);}
+
+function renderVentas(){const ventas=getVentas();const grid=document.getElementById('ventasGrid');const search=document.getElementById('ventasSearch').value.toLowerCase();const filterE=document.getElementById('ventasFilterEstado').value;
+const filtered=ventas.filter(v=>{const text=[v.destino,v.clienteNombre,v.encargado].join(' ').toLowerCase();return(!search||text.includes(search))&&(!filterE||v.estado===filterE);});
+if(!filtered.length){grid.innerHTML=`<div class="grid-empty"><h3>${search||filterE?'Sin resultados':'Sin ventas'}</h3><p>Las ventas se crean al aceptar cotizaciones.</p></div>`;return;}
+const estadoLabels={pendiente:'Pendiente',en_proceso:'En proceso',completada:'Completada',cancelada:'Cancelada'};
+const estadoColors={pendiente:'var(--accent)',en_proceso:'var(--primary)',completada:'var(--success)',cancelada:'var(--danger)'};
+grid.innerHTML=filtered.map(v=>{const done=v.checklist.filter(c=>c.completado).length;const total=v.checklist.length;const pct=total?Math.round(done/total*100):0;
+return`<div class="list-row" style="border-left-color:${estadoColors[v.estado]||'var(--primary)'}">
+<div class="lr-main">
+<div class="lr-title">${esc(v.destino)}</div>
+<div class="lr-detail">${esc(v.clienteNombre)}</div>
+${v.fechaInicio?`<div class="lr-detail">${formatDateRange(v.fechaInicio,v.fechaFin)}</div>`:''}
+${v.encargado?`<div class="lr-detail">${esc(v.encargado)}</div>`:''}
+<span class="lr-badge" style="background:${estadoColors[v.estado]||'var(--primary)'};color:white;">${estadoLabels[v.estado]||v.estado}</span>
+</div>
+<div class="lr-progress"><div class="venta-progress"><div class="venta-progress-bar" style="width:${pct}%"></div></div><div class="lr-progress-text">${done}/${total} (${pct}%)</div></div>
+<div class="lr-actions"><button class="btn-checklist" onclick="openChecklist('${v.id}')">&#9998; Checklist</button><button class="btn btn-sm btn-ghost" onclick="cargarCotizacion('${v.cotizacionId}')">Ver</button></div>
+</div>`;}).join('');}
+
+function openChecklist(ventaId){const ventas=getVentas();const v=ventas.find(x=>x.id===ventaId);if(!v)return;document.getElementById('clVentaId').value=ventaId;document.getElementById('modalChecklistTitulo').textContent='Checklist - '+v.destino;document.getElementById('clEstado').value=v.estado;renderChecklistItems(v);document.getElementById('modalChecklist').classList.add('open');}
+
+function renderChecklistItems(v){if(!v){const ventas=getVentas();v=ventas.find(x=>x.id===document.getElementById('clVentaId').value);}if(!v)return;const c=document.getElementById('checklistItems');c.innerHTML=v.checklist.map(it=>`<div class="checklist-item${it.completado?' done':''}"><input type="checkbox" ${it.completado?'checked':''} onchange="toggleCheckItem('${v.id}','${it.id}')"><span class="cl-text">${esc(it.texto)}</span><button class="cl-remove" onclick="removeCheckItem('${v.id}','${it.id}')">&times;</button></div>`).join('');}
+
+function toggleCheckItem(ventaId,itemId){const ventas=getVentas();const v=ventas.find(x=>x.id===ventaId);if(!v)return;const it=v.checklist.find(c=>c.id===itemId);if(it)it.completado=!it.completado;saveVentas(ventas);renderChecklistItems(v);renderVentas();}
+
+function addChecklistItem(){const ventaId=document.getElementById('clVentaId').value;const input=document.getElementById('clNuevoItem');const texto=input.value.trim();if(!texto)return;const ventas=getVentas();const v=ventas.find(x=>x.id===ventaId);if(!v)return;v.checklist.push({id:Date.now().toString(),texto,completado:false});saveVentas(ventas);input.value='';renderChecklistItems(v);renderVentas();}
+
+function removeCheckItem(ventaId,itemId){const ventas=getVentas();const v=ventas.find(x=>x.id===ventaId);if(!v)return;v.checklist=v.checklist.filter(c=>c.id!==itemId);saveVentas(ventas);renderChecklistItems(v);renderVentas();}
+
+function updateVentaEstado(){const ventaId=document.getElementById('clVentaId').value;const estado=document.getElementById('clEstado').value;const ventas=getVentas();const v=ventas.find(x=>x.id===ventaId);if(!v)return;v.estado=estado;saveVentas(ventas);renderVentas();}
+
+// ===== CLIENTES =====
+function autoCreateCliente(data){const nombre=data.tipoCliente==='empresa'?(data.empresaContacto||data.empresaNombre||''):(data.clienteNombre||'');const email=data.tipoCliente==='empresa'?(data.empresaEmail||''):(data.clienteEmail||'');const telefono=data.tipoCliente==='empresa'?(data.empresaTelefono||''):(data.clienteTelefono||'');if(!nombre&&!email)return null;
+const clientes=getClientes();let found=null;if(email)found=clientes.find(c=>c.email&&c.email.toLowerCase()===email.toLowerCase());if(!found&&nombre)found=clientes.find(c=>c.nombreCompleto&&c.nombreCompleto.toLowerCase()===nombre.toLowerCase());
+if(found){if(telefono&&telefono!==found.telefono)found.telefono=telefono;if(email&&email!==found.email)found.email=email;found.fechaActualizacion=new Date().toISOString();saveClientes(clientes);updateBadges();return found.id;}
+const nuevo={id:Date.now().toString(),nombreCompleto:nombre,tipoDocumento:'cedula',numeroDocumento:'',nacionalidad:'',fechaNacimiento:'',telefono,email,direccion:'',empresa:data.tipoCliente==='empresa'?data.empresaNombre:'',numeroPasaporte:'',vencimientoPasaporte:'',viajeroProgramaAerolinea:'',viajeroProgramaNumero:'',notas:'',fechaCreacion:new Date().toISOString(),fechaActualizacion:new Date().toISOString()};clientes.unshift(nuevo);saveClientes(clientes);updateBadges();return nuevo.id;}
+
+function renderClientes(){const clientes=getClientes();const grid=document.getElementById('clientesGrid');const search=document.getElementById('clientesSearch').value.toLowerCase();const filtered=clientes.filter(c=>{const text=[c.nombreCompleto,c.email,c.telefono,c.numeroDocumento,c.empresa].join(' ').toLowerCase();return!search||text.includes(search);});
+if(!filtered.length){grid.innerHTML=`<div class="grid-empty"><h3>${search?'Sin resultados':'Sin clientes'}</h3><p>Los clientes se crean al guardar cotizaciones o manualmente.</p></div>`;return;}
+const hist=getHistorial();const ventas=getVentas();
+grid.innerHTML=filtered.map(c=>{const numCots=hist.filter(h=>h.clienteId===c.id).length;const numVentas=ventas.filter(v=>v.clienteId===c.id).length;
+return`<div class="list-row">
+<div class="lr-main">
+<div class="lr-title">${esc(c.nombreCompleto)}</div>
+${c.email?`<div class="lr-detail">${esc(c.email)}</div>`:''}
+${c.telefono?`<div class="lr-detail">Tel: ${esc(c.telefono)}</div>`:''}
+${c.empresa?`<div class="lr-detail">${esc(c.empresa)}</div>`:''}
+${c.numeroPasaporte?`<div class="lr-detail">Pasap: ${esc(c.numeroPasaporte)}</div>`:''}
+<span class="lr-badge" style="background:var(--primary-light);color:var(--primary-dark);">${numCots} cot.</span>
+<span class="lr-badge" style="background:var(--accent-light);color:var(--accent-dark);">${numVentas} venta${numVentas!==1?'s':''}</span>
+</div>
+<div class="lr-actions"><button class="btn btn-sm btn-primary" onclick="openClienteModal('${c.id}')">Editar</button><button class="btn btn-sm btn-danger" onclick="eliminarCliente('${c.id}')">Eliminar</button></div>
+</div>`;}).join('');}
+
+function openClienteModal(id){const modal=document.getElementById('modalCliente');const titulo=document.getElementById('modalClienteTitulo');if(id){const clientes=getClientes();const c=clientes.find(x=>x.id===id);if(!c)return;titulo.textContent='Editar Cliente';document.getElementById('mcId').value=id;document.getElementById('mcNombre').value=c.nombreCompleto||'';document.getElementById('mcTipoDoc').value=c.tipoDocumento||'cedula';document.getElementById('mcNumDoc').value=c.numeroDocumento||'';document.getElementById('mcNacionalidad').value=c.nacionalidad||'';document.getElementById('mcFechaNac').value=c.fechaNacimiento||'';document.getElementById('mcTelefono').value=c.telefono||'';document.getElementById('mcEmail').value=c.email||'';document.getElementById('mcDireccion').value=c.direccion||'';document.getElementById('mcEmpresa').value=c.empresa||'';document.getElementById('mcPasaporte').value=c.numeroPasaporte||'';document.getElementById('mcPasaporteVenc').value=c.vencimientoPasaporte||'';document.getElementById('mcVFAerolinea').value=c.viajeroProgramaAerolinea||'';document.getElementById('mcVFNumero').value=c.viajeroProgramaNumero||'';document.getElementById('mcNotas').value=c.notas||'';}else{titulo.textContent='Nuevo Cliente';document.getElementById('mcId').value='';['mcNombre','mcNumDoc','mcNacionalidad','mcFechaNac','mcTelefono','mcEmail','mcDireccion','mcEmpresa','mcPasaporte','mcPasaporteVenc','mcVFAerolinea','mcVFNumero','mcNotas'].forEach(id=>document.getElementById(id).value='');document.getElementById('mcTipoDoc').value='cedula';}modal.classList.add('open');}
+
+function guardarCliente(){const id=document.getElementById('mcId').value;const nombre=document.getElementById('mcNombre').value.trim();if(!nombre){alert('Ingrese el nombre.');return;}const clientes=getClientes();const obj={id:id||Date.now().toString(),nombreCompleto:nombre,tipoDocumento:document.getElementById('mcTipoDoc').value,numeroDocumento:document.getElementById('mcNumDoc').value,nacionalidad:document.getElementById('mcNacionalidad').value,fechaNacimiento:document.getElementById('mcFechaNac').value,telefono:document.getElementById('mcTelefono').value,email:document.getElementById('mcEmail').value,direccion:document.getElementById('mcDireccion').value,empresa:document.getElementById('mcEmpresa').value,numeroPasaporte:document.getElementById('mcPasaporte').value,vencimientoPasaporte:document.getElementById('mcPasaporteVenc').value,viajeroProgramaAerolinea:document.getElementById('mcVFAerolinea').value,viajeroProgramaNumero:document.getElementById('mcVFNumero').value,notas:document.getElementById('mcNotas').value,fechaCreacion:new Date().toISOString(),fechaActualizacion:new Date().toISOString()};
+if(id){const idx=clientes.findIndex(c=>c.id===id);if(idx>=0){obj.fechaCreacion=clientes[idx].fechaCreacion;clientes[idx]=obj;}else clientes.unshift(obj);}else{clientes.unshift(obj);}
+saveClientes(clientes);closeModal('modalCliente');renderClientes();updateBadges();}
+
+function eliminarCliente(id){if(!confirm('\u00bfEliminar este cliente?'))return;saveClientes(getClientes().filter(c=>c.id!==id));renderClientes();updateBadges();}
+
+// ===== MODALS =====
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ===== RESET =====
+function resetForm(){if(!confirm('\u00bfLimpiar todos los campos?'))return;editingId=null;selectedHeaderImg=null;adjuntos=[];renderAdjuntos();
+['destino','fechaInicio','fechaFin','alertaDestino','infoDestino','precioReserva','precioReservaNino','precioReservaBebe','clienteNombre','clienteTelefono','clienteEmail','empresaNombre','empresaContacto','empresaTelefono','empresaEmail','lineaCrucero','nombreBarco','puertoSalida','duracionCrucero','planPagos','cruceroRecomendaciones'].forEach(id=>{document.getElementById(id).value='';});
+document.getElementById('hospedajeContainer').innerHTML='';
+document.getElementById('itinerarioContainer').innerHTML='';
+document.getElementById('paisSelect').value='';document.getElementById('encargado').value='';document.getElementById('destinoPreviewImg').classList.remove('visible');onPaisChange();document.getElementById('opcionesBody').innerHTML='';document.getElementById('puertosContainer').innerHTML='';switchTipoCliente('persona');switchFormat(currentFormat);addOpcion();updatePreview();}
+
+// ===== UTILS =====
+function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+
+// ===== IMAGE LIGHTBOX =====
+function openImgLightbox(adjuntoId,categoria,descripcion){
+    const a=adjuntos.find(x=>x.id===adjuntoId);
+    if(!a)return;
+    const box=document.getElementById('imgLightbox');
+    document.getElementById('imgLightboxImg').src=a.dataUrl;
+    document.getElementById('imgLightboxCaption').textContent=(categoria?categoria+' - ':'')+descripcion;
+    box.classList.add('open');
+}
+function closeImgLightbox(e){
+    // Solo cierra si se hace click en el overlay o en el botón X, no en la imagen misma
+    if(e&&e.target&&e.target.tagName==='IMG')return;
+    document.getElementById('imgLightbox').classList.remove('open');
+}
+// Cerrar con tecla Escape
+document.addEventListener('keydown',function(e){
+    if(e.key==='Escape')closeImgLightbox();
+});
+
+// ===== START =====
+init();
+</script>
+</body>
+</html>
