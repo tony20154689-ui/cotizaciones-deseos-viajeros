@@ -609,7 +609,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
     .price-input{font-size:14px!important}
 }
 
-@page{margin:0;size:letter}
+@page{margin:0 0 2.5cm 0;size:letter}
 @media print{
     *{print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
     html,body{margin:0!important;padding:0!important;overflow:visible!important;background:white!important;width:100%!important;height:auto!important}
@@ -1016,6 +1016,17 @@ function cfgGet(){
 
 // Helper para parsear números tolerando formatos ($, comas, guiones)
 const num=(v)=>parseFloat(String(v||'').replace(/[^0-9.\-]/g,''))||0;
+
+// Redondea un número al siguiente entero que termine en 9
+// Ej: 723.08 → 729, 730 → 739, 739 → 739, 741 → 749, 0 → 0
+function roundToEnding9(n){
+    if(!n||n<=0)return 0;
+    const ceil=Math.ceil(n);
+    const lastDigit=ceil%10;
+    if(lastDigit===9)return ceil;
+    if(lastDigit<9)return ceil+(9-lastDigit);
+    return ceil+9; // lastDigit > 9 no pasa, pero por seguridad
+}
 
 // Evalúa una expresión matemática segura (solo números y +-*/())
 // Acepta "10+5*2", "1299/4", "625+75", etc. Si es solo número, lo devuelve como número.
@@ -1645,23 +1656,33 @@ function addOpcion(data){
 }
 
 function buildCalcHtml(opId,calc){
-    const titEx='Puede escribir operaciones como: 1299/4, 625+75, 300*2, 150-20, etc.';
+    // Filas dinámicas: las 4 fijas + las extra que el usuario haya agregado
+    const defaultRows=['Boleto','Hotel','Tours','Transporte'];
+    const extraRows=(calc.extraRows||[]);
+    const allRows=[...defaultRows,...extraRows.map(r=>r.name)];
+    const allFlds=[...['boleto','hotel','tours','transp'],...extraRows.map(r=>r.fld)];
+    const dynamicRowsHtml=allRows.map((name,i)=>{
+        const fld=allFlds[i];
+        const isExtra=i>=4;
+        return`<tr data-calc-fld="${fld}"><td style="display:flex;align-items:center;gap:2px;">${isExtra?'<input type="text" data-op="'+opId+'" data-rowname="'+fld+'" value="'+esc(name)+'" style="width:70px;font-size:0.7rem;font-weight:600;border:1px solid var(--border);border-radius:3px;padding:1px 3px;" oninput="onCalcInput(this)">':'<span>'+esc(name)+'</span>'}${isExtra?'<button class="btn-icon remove" style="width:18px;height:18px;font-size:0.6rem;" onclick="removeCalcRow(this,\\''+opId+'\\')" title="Eliminar fila">&times;</button>':''}</td><td><input data-op="${opId}" data-fld="${fld}" data-col="ad" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="${fld}" data-col="n11" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="${fld}" data-col="n3" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td></tr>`;
+    }).join('');
+
     return`<td colspan="5"><div class="calc-container">
-        <h5>&#128200; Calculadora de costos &mdash; acepta f\u00f3rmulas estilo Excel (+ - * /)</h5>
+        <h5>&#128200; Calculadora &mdash; f\u00f3rmulas Excel (+ - * /) &bull; Total termina en 9</h5>
         <table class="calc-table">
             <thead><tr><th></th><th>Adulto</th><th>Ni\u00f1o 11-3</th><th>Ni\u00f1o &lt;3</th></tr></thead>
+            <tbody class="calc-dynamic-rows" data-op="${opId}">
+                ${dynamicRowsHtml}
+            </tbody>
             <tbody>
-                <tr><td>Boleto</td><td><input data-op="${opId}" data-fld="boleto" data-col="ad" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="boleto" data-col="n11" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="boleto" data-col="n3" oninput="onCalcInput(this)"></td></tr>
-                <tr><td>Hotel</td><td><input data-op="${opId}" data-fld="hotel" data-col="ad" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="hotel" data-col="n11" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="hotel" data-col="n3" oninput="onCalcInput(this)"></td></tr>
-                <tr><td>Tours</td><td><input data-op="${opId}" data-fld="tours" data-col="ad" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="tours" data-col="n11" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="tours" data-col="n3" oninput="onCalcInput(this)"></td></tr>
-                <tr><td>Transporte</td><td><input data-op="${opId}" data-fld="transp" data-col="ad" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="transp" data-col="n11" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="transp" data-col="n3" oninput="onCalcInput(this)"></td></tr>
-                <tr class="calc-subtotal"><td>Subtotal</td><td><span class="calc-readonly" data-op="${opId}" data-sub="ad">0.00</span></td><td><span class="calc-readonly" data-op="${opId}" data-sub="n11">0.00</span></td><td><span class="calc-readonly" data-op="${opId}" data-sub="n3">0.00</span></td></tr>
-                <tr><td>Fee</td><td><input data-op="${opId}" data-fld="fee" data-col="ad" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="fee" data-col="n11" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="fee" data-col="n3" oninput="onCalcInput(this)"></td></tr>
-                <tr><td>X grupo</td><td><input data-op="${opId}" data-fld="xgrupo" data-col="ad" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="xgrupo" data-col="n11" oninput="onCalcInput(this)"></td><td><input data-op="${opId}" data-fld="xgrupo" data-col="n3" oninput="onCalcInput(this)"></td></tr>
-                <tr class="calc-total"><td>Total</td><td><span class="calc-readonly" data-op="${opId}" data-tot="ad">0.00</span></td><td><span class="calc-readonly" data-op="${opId}" data-tot="n11">0.00</span></td><td><span class="calc-readonly" data-op="${opId}" data-tot="n3">0.00</span></td></tr>
-                <tr class="calc-reserva"><td>Reserva</td><td><span class="calc-readonly" data-op="${opId}" data-res="ad">0.00</span></td><td><span class="calc-readonly" data-op="${opId}" data-res="n11">0.00</span></td><td><span class="calc-readonly" data-op="${opId}" data-res="n3">0.00</span></td></tr>
+                <tr class="calc-subtotal"><td>Subtotal</td><td><span class="calc-readonly" data-op="${opId}" data-sub="ad">0</span></td><td><span class="calc-readonly" data-op="${opId}" data-sub="n11">0</span></td><td><span class="calc-readonly" data-op="${opId}" data-sub="n3">0</span></td></tr>
+                <tr><td>Fee</td><td><input data-op="${opId}" data-fld="fee" data-col="ad" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="fee" data-col="n11" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="fee" data-col="n3" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td></tr>
+                <tr><td>X grupo</td><td><input data-op="${opId}" data-fld="xgrupo" data-col="ad" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="xgrupo" data-col="n11" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="xgrupo" data-col="n3" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td></tr>
+                <tr class="calc-total"><td>Total</td><td><span class="calc-readonly" data-op="${opId}" data-tot="ad">0</span></td><td><span class="calc-readonly" data-op="${opId}" data-tot="n11">0</span></td><td><span class="calc-readonly" data-op="${opId}" data-tot="n3">0</span></td></tr>
+                <tr class="calc-reserva"><td>Reserva</td><td><span class="calc-readonly" data-op="${opId}" data-res="ad">0</span></td><td><span class="calc-readonly" data-op="${opId}" data-res="n11">0</span></td><td><span class="calc-readonly" data-op="${opId}" data-res="n3">0</span></td></tr>
             </tbody>
         </table>
+        <button class="btn btn-sm btn-ghost" style="margin-top:6px;font-size:0.7rem;" onclick="addCalcRow('${opId}')">+ Agregar fila</button>
         <div class="calc-paxcount">
             Pax del grupo:
             <label>Ad <input type="number" data-op="${opId}" data-pax="ad" min="1" value="1" oninput="onCalcInput(this)"></label>
@@ -1670,10 +1691,48 @@ function buildCalcHtml(opId,calc){
         </div>
         <div class="calc-actions">
             <button class="calc-apply" onclick="applyCalcToRow('${opId}')">Aplicar total al precio</button>
-            <small style="color:var(--text-light);font-size:0.68rem;align-self:center;">Los valores se aplican autom\u00e1ticamente salvo que edite el precio manualmente.</small>
+            <small style="color:var(--text-light);font-size:0.68rem;align-self:center;">Total redondeado al siguiente n\u00famero terminado en 9.</small>
         </div>
     </div></td>`;
 }
+
+// Agregar fila dinámica a la calculadora
+function addCalcRow(opId){
+    const tbody=document.querySelector(`.calc-dynamic-rows[data-op="${opId}"]`);
+    if(!tbody)return;
+    const fld='extra_'+Date.now();
+    const tr=document.createElement('tr');
+    tr.dataset.calcFld=fld;
+    tr.innerHTML=`<td style="display:flex;align-items:center;gap:2px;"><input type="text" data-op="${opId}" data-rowname="${fld}" value="" placeholder="Nombre" style="width:70px;font-size:0.7rem;font-weight:600;border:1px solid var(--border);border-radius:3px;padding:1px 3px;" oninput="onCalcInput(this)"><button class="btn-icon remove" style="width:18px;height:18px;font-size:0.6rem;" onclick="removeCalcRow(this,'${opId}')" title="Eliminar fila">&times;</button></td><td><input data-op="${opId}" data-fld="${fld}" data-col="ad" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="${fld}" data-col="n11" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="${fld}" data-col="n3" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td>`;
+    tbody.appendChild(tr);
+    tr.querySelector('input').focus();
+    recalcRow(opId,true);
+}
+
+function removeCalcRow(btn,opId){
+    btn.closest('tr').remove();
+    recalcRow(opId,true);
+}
+
+// Mostrar resultado numérico al salir de una celda (onblur)
+function showCalcResult(el){
+    const v=el.value;
+    if(!v)return;
+    const result=evalExpr(v);
+    // Solo reemplazar si la cadena original era una fórmula (tiene operadores)
+    if(/[+\-*/]/.test(v)&&result!==0){
+        el.dataset.formula=v; // guardar la fórmula original como tooltip
+        el.value=result;
+        el.title='F\u00f3rmula: '+v+' = '+result;
+    }
+}
+// Al hacer focus, si tenía fórmula, restaurarla para poder editarla
+document.addEventListener('focusin',function(e){
+    if(e.target&&e.target.dataset&&e.target.dataset.formula){
+        e.target.value=e.target.dataset.formula;
+        e.target.title='';
+    }
+});
 
 function populateCalcInputs(opId,calc){
     const v=calc.values||{};
@@ -1736,13 +1795,28 @@ function applyCalcToRow(opId){
 function recalcRow(opId,autoFill){
     const tr=document.querySelector(`tr.opcion-row[data-opcion-id="${opId}"]`);
     if(!tr)return;
-    // Recolectar values del calc-row DOM
-    const calc={values:{},paxCount:{}};
-    ['boleto','hotel','tours','transp','fee','xgrupo'].forEach(fld=>{
+    // Recolectar values del calc-row DOM (dinámicas + fijas)
+    const calc={values:{},paxCount:{},extraRows:[]};
+    // Leer todas las filas dinámicas
+    const dynTbody=document.querySelector(`.calc-dynamic-rows[data-op="${opId}"]`);
+    if(dynTbody){
+        dynTbody.querySelectorAll('tr[data-calc-fld]').forEach(row=>{
+            const fld=row.dataset.calcFld;
+            const nameInput=row.querySelector(`input[data-rowname="${fld}"]`);
+            if(nameInput)calc.extraRows.push({fld,name:nameInput.value||fld});
+            calc.values[fld]={};
+            ['ad','n11','n3'].forEach(col=>{
+                const inp=row.querySelector(`input[data-fld="${fld}"][data-col="${col}"]`);
+                calc.values[fld][col]=inp?(inp.dataset.formula||inp.value):'';
+            });
+        });
+    }
+    // Filas fijas (fee, xgrupo)
+    ['fee','xgrupo'].forEach(fld=>{
         calc.values[fld]={};
         ['ad','n11','n3'].forEach(col=>{
             const inp=document.querySelector(`input[data-op="${opId}"][data-fld="${fld}"][data-col="${col}"]`);
-            calc.values[fld][col]=inp?inp.value:'';
+            calc.values[fld][col]=inp?(inp.dataset.formula||inp.value):'';
         });
     });
     ['ad','n11','n3'].forEach(col=>{
@@ -1753,20 +1827,29 @@ function recalcRow(opId,autoFill){
     const prev=JSON.parse(tr.dataset.calc||'{}');
     calc.expanded=prev.expanded||false;
     tr.dataset.calc=JSON.stringify(calc);
-    // Fórmulas
+    // Fórmulas: sumar TODAS las filas dinámicas para el subtotal
     const reservaFee=cfgGet().fees.reserva_fee||0;
     const results={ad:{},n11:{},n3:{}};
+    // Recolectar las flds dinámicas (todas menos fee y xgrupo)
+    const dynFlds=dynTbody?Array.from(dynTbody.querySelectorAll('tr[data-calc-fld]')).map(r=>r.dataset.calcFld):['boleto','hotel','tours','transp'];
     ['ad','n11','n3'].forEach(col=>{
-        const bol=evalExpr(calc.values.boleto[col]);
-        const hot=evalExpr(calc.values.hotel[col]);
-        const tou=evalExpr(calc.values.tours[col]);
-        const tra=evalExpr(calc.values.transp[col]);
-        const fee=evalExpr(calc.values.fee[col]);
-        const xgr=evalExpr(calc.values.xgrupo[col]);
+        let subSum=0;
+        let firstRowVal=0; // Para reserva, usamos la primera fila (Boleto)
+        dynFlds.forEach((fld,i)=>{
+            const v=evalExpr(calc.values[fld]?.[col]);
+            subSum+=v;
+            if(i===0)firstRowVal=v;
+        });
+        const fee=evalExpr(calc.values.fee?.[col]);
+        const xgr=evalExpr(calc.values.xgrupo?.[col]);
+        const sub=subSum;
+        const bol=firstRowVal;
         const pax=Math.max(1,calc.paxCount[col]||0);
         const sub=bol+hot+tou+tra;
         const xgrPerPax=calc.paxCount[col]>0?(xgr/pax):0;
-        const total=sub+fee+xgrPerPax;
+        const totalRaw=sub+fee+xgrPerPax;
+        // Redondear al siguiente número que termine en 9 (sin decimales)
+        const total=roundToEnding9(totalRaw);
         const reserva=bol+reservaFee;
         results[col]={sub,total,reserva};
     });
@@ -1776,7 +1859,7 @@ function recalcRow(opId,autoFill){
         const totEl=document.querySelector(`span[data-op="${opId}"][data-tot="${col}"]`);
         const resEl=document.querySelector(`span[data-op="${opId}"][data-res="${col}"]`);
         if(subEl)subEl.textContent=results[col].sub.toFixed(2);
-        if(totEl)totEl.textContent=results[col].total.toFixed(2);
+        if(totEl)totEl.textContent=results[col].total; // sin decimales, ya es entero
         if(resEl)resEl.textContent=results[col].reserva.toFixed(2);
     });
     // Auto-fill main row (si no hay manual override)
@@ -1785,9 +1868,9 @@ function recalcRow(opId,autoFill){
         const niInp=tr.querySelector('.op-nino');
         const beInp=tr.querySelector('.op-bebe');
         // Solo actualiza si el total es > 0 (usuario ingresó algo)
-        if(results.ad.total>0)adInp.value=results.ad.total.toFixed(2);
-        if(results.n11.total>0)niInp.value=results.n11.total.toFixed(2);
-        if(results.n3.total>0)beInp.value=results.n3.total.toFixed(2);
+        if(results.ad.total>0)adInp.value=results.ad.total; // entero terminado en 9
+        if(results.n11.total>0)niInp.value=results.n11.total;
+        if(results.n3.total>0)beInp.value=results.n3.total;
         updatePreview();
     }
 }
