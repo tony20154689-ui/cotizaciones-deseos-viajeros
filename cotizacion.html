@@ -395,6 +395,10 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
 .calc-apply{font-size:0.72rem;padding:5px 10px;background:var(--accent);color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600}
 .calc-apply:hover{filter:brightness(1.1)}
 .row-manual-override .op-adulto,.row-manual-override .op-nino,.row-manual-override .op-bebe{background:#fffce8!important}
+.calc-drag{cursor:grab;color:var(--text-light);user-select:none}
+.calc-drag:hover{color:var(--primary)}
+.calc-drag:active{cursor:grabbing;color:var(--primary-dark)}
+.calc-table tr.calc-drag-over{border-top:2px solid var(--accent)!important}
 
 /* ===== ESTADO DE CUENTA ===== */
 .cobranza-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
@@ -611,7 +615,8 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
     .price-input{font-size:14px!important}
 }
 
-@page{margin:0 0 2.5cm 0;size:letter}
+@page{margin:2.5cm 0 2.5cm 0;size:letter}
+@page :first{margin-top:0}
 @media print{
     *{print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
     html,body{margin:0!important;padding:0!important;overflow:visible!important;background:white!important;width:100%!important;height:auto!important}
@@ -1652,24 +1657,30 @@ function addOpcion(data){
     tbody.appendChild(calcTr);
     // Si tiene data.calc guardado, poblar los inputs con los valores
     populateCalcInputs(opId,calc);
+    // Inicializar drag & drop de las filas del calc
+    const dynTbody=document.querySelector(`.calc-dynamic-rows[data-op="${opId}"]`);
+    initCalcRowDrag(dynTbody);
     recalcRow(opId,false); // display only, no auto-fill on load
     updatePreview();
     return opId;
 }
 
 function buildCalcHtml(opId,calc){
-    // Filas dinámicas: las 4 fijas + las extra que el usuario haya agregado
-    const defaultRows=['Boleto','Hotel','Tours','Transporte'];
-    const extraRows=(calc.extraRows||[]);
-    const allRows=[...defaultRows,...extraRows.map(r=>r.name)];
-    const allFlds=[...['boleto','hotel','tours','transp'],...extraRows.map(r=>r.fld)];
-    const dynamicRowsHtml=allRows.map((name,i)=>{
-        const fld=allFlds[i];
-        const isExtra=i>=4;
-        const nameCell=isExtra
-            ?`<input type="text" data-op="${opId}" data-rowname="${fld}" value="${esc(name)}" style="width:70px;font-size:0.7rem;font-weight:600;border:1px solid var(--border);border-radius:3px;padding:1px 3px;" oninput="onCalcInput(this)"><button class="btn-icon remove" style="width:18px;height:18px;font-size:0.6rem;" onclick="removeCalcRow(this,'${opId}')" title="Eliminar fila">&times;</button>`
-            :`<span>${esc(name)}</span>`;
-        return`<tr data-calc-fld="${fld}"><td style="display:flex;align-items:center;gap:2px;">${nameCell}</td><td><input data-op="${opId}" data-fld="${fld}" data-col="ad" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="${fld}" data-col="n11" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="${fld}" data-col="n3" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td></tr>`;
+    // Todas las filas son dinámicas (reordenables + eliminables + editables)
+    // Si no hay filas guardadas, usar 4 default
+    let rows=(calc.rows&&calc.rows.length)?calc.rows:[
+        {fld:'boleto',name:'Boleto'},
+        {fld:'hotel',name:'Hotel'},
+        {fld:'tours',name:'Tours'},
+        {fld:'transp',name:'Transporte'}
+    ];
+    // Compatibilidad hacia atrás: si viene el formato viejo con extraRows
+    if(calc.extraRows&&calc.extraRows.length&&!calc.rows){
+        rows=[...rows,...calc.extraRows.map(r=>({fld:r.fld,name:r.name}))];
+    }
+    const dynamicRowsHtml=rows.map(r=>{
+        const fld=r.fld,name=r.name;
+        return`<tr data-calc-fld="${fld}" draggable="true"><td style="display:flex;align-items:center;gap:2px;padding-left:2px;"><span class="drag-handle calc-drag" draggable="false" title="Arrastrar para reordenar" style="font-size:0.75rem;padding:2px 3px;">&#9776;</span><input type="text" data-op="${opId}" data-rowname="${fld}" value="${esc(name)}" placeholder="Nombre" style="flex:1;min-width:0;font-size:0.7rem;font-weight:600;border:1px solid var(--border);border-radius:3px;padding:1px 3px;" oninput="onCalcInput(this)"><button class="btn-icon remove" style="width:18px;height:18px;font-size:0.6rem;flex-shrink:0;" onclick="removeCalcRow(this,'${opId}')" title="Eliminar fila">&times;</button></td><td><input data-op="${opId}" data-fld="${fld}" data-col="ad" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="${fld}" data-col="n11" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="${fld}" data-col="n3" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td></tr>`;
     }).join('');
 
     return`<td colspan="5"><div class="calc-container">
@@ -1705,18 +1716,71 @@ function buildCalcHtml(opId,calc){
 function addCalcRow(opId){
     const tbody=document.querySelector(`.calc-dynamic-rows[data-op="${opId}"]`);
     if(!tbody)return;
-    const fld='extra_'+Date.now();
+    const fld='r_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
     const tr=document.createElement('tr');
     tr.dataset.calcFld=fld;
-    tr.innerHTML=`<td style="display:flex;align-items:center;gap:2px;"><input type="text" data-op="${opId}" data-rowname="${fld}" value="" placeholder="Nombre" style="width:70px;font-size:0.7rem;font-weight:600;border:1px solid var(--border);border-radius:3px;padding:1px 3px;" oninput="onCalcInput(this)"><button class="btn-icon remove" style="width:18px;height:18px;font-size:0.6rem;" onclick="removeCalcRow(this,'${opId}')" title="Eliminar fila">&times;</button></td><td><input data-op="${opId}" data-fld="${fld}" data-col="ad" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="${fld}" data-col="n11" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="${fld}" data-col="n3" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td>`;
+    tr.draggable=true;
+    tr.innerHTML=`<td style="display:flex;align-items:center;gap:2px;padding-left:2px;"><span class="drag-handle calc-drag" draggable="false" title="Arrastrar para reordenar" style="font-size:0.75rem;padding:2px 3px;">&#9776;</span><input type="text" data-op="${opId}" data-rowname="${fld}" value="" placeholder="Nombre" style="flex:1;min-width:0;font-size:0.7rem;font-weight:600;border:1px solid var(--border);border-radius:3px;padding:1px 3px;" oninput="onCalcInput(this)"><button class="btn-icon remove" style="width:18px;height:18px;font-size:0.6rem;flex-shrink:0;" onclick="removeCalcRow(this,'${opId}')" title="Eliminar fila">&times;</button></td><td><input data-op="${opId}" data-fld="${fld}" data-col="ad" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="${fld}" data-col="n11" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="${fld}" data-col="n3" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td>`;
     tbody.appendChild(tr);
-    tr.querySelector('input').focus();
+    initCalcRowDrag(tbody);
+    tr.querySelector('input[data-rowname]').focus();
     recalcRow(opId,true);
 }
 
 function removeCalcRow(btn,opId){
     btn.closest('tr').remove();
     recalcRow(opId,true);
+}
+
+// Drag & drop para reordenar filas dentro del calc
+function initCalcRowDrag(tbody){
+    if(!tbody||tbody.dataset.dragInit==='1')return;
+    tbody.dataset.dragInit='1';
+    let dragRow=null;
+    tbody.addEventListener('mousedown',function(e){
+        // Solo iniciar si se presiona sobre el drag-handle
+        if(!e.target.closest('.calc-drag')){
+            // prevenir drag desde otros lugares (inputs)
+            const tr=e.target.closest('tr');
+            if(tr)tr.draggable=false;
+        }else{
+            const tr=e.target.closest('tr');
+            if(tr)tr.draggable=true;
+        }
+    });
+    tbody.addEventListener('dragstart',function(e){
+        const tr=e.target.closest('tr');
+        if(!tr||!tr.draggable){e.preventDefault();return;}
+        dragRow=tr;
+        tr.style.opacity='0.4';
+        e.dataTransfer.effectAllowed='move';
+        e.dataTransfer.setData('text/plain','drag');
+    });
+    tbody.addEventListener('dragend',function(e){
+        if(dragRow){dragRow.style.opacity='';dragRow=null;}
+        tbody.querySelectorAll('tr').forEach(t=>t.classList.remove('calc-drag-over'));
+        const opId=tbody.dataset.op;
+        if(opId)recalcRow(opId,true);
+    });
+    tbody.addEventListener('dragover',function(e){
+        e.preventDefault();
+        e.dataTransfer.dropEffect='move';
+        const tr=e.target.closest('tr');
+        if(!tr||tr===dragRow)return;
+        tbody.querySelectorAll('tr').forEach(t=>t.classList.remove('calc-drag-over'));
+        tr.classList.add('calc-drag-over');
+    });
+    tbody.addEventListener('drop',function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        if(!dragRow)return;
+        const tr=e.target.closest('tr');
+        if(!tr||tr===dragRow)return;
+        tr.classList.remove('calc-drag-over');
+        const r=tr.getBoundingClientRect();
+        if(e.clientY<r.top+r.height/2)tbody.insertBefore(dragRow,tr);
+        else tbody.insertBefore(dragRow,tr.nextSibling);
+    });
 }
 
 // Mostrar resultado numérico al salir de una celda (onblur)
@@ -1801,14 +1865,14 @@ function recalcRow(opId,autoFill){
     const tr=document.querySelector(`tr.opcion-row[data-opcion-id="${opId}"]`);
     if(!tr)return;
     // Recolectar values del calc-row DOM (dinámicas + fijas)
-    const calc={values:{},paxCount:{},extraRows:[]};
-    // Leer todas las filas dinámicas
+    const calc={values:{},paxCount:{},rows:[]};
+    // Leer todas las filas dinámicas (en el orden actual del DOM)
     const dynTbody=document.querySelector(`.calc-dynamic-rows[data-op="${opId}"]`);
     if(dynTbody){
         dynTbody.querySelectorAll('tr[data-calc-fld]').forEach(row=>{
             const fld=row.dataset.calcFld;
             const nameInput=row.querySelector(`input[data-rowname="${fld}"]`);
-            if(nameInput)calc.extraRows.push({fld,name:nameInput.value||fld});
+            calc.rows.push({fld,name:nameInput?nameInput.value:fld});
             calc.values[fld]={};
             ['ad','n11','n3'].forEach(col=>{
                 const inp=row.querySelector(`input[data-fld="${fld}"][data-col="${col}"]`);
