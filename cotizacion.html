@@ -1787,13 +1787,22 @@ function initCalcRowDrag(tbody){
 // Mostrar resultado numérico al salir de una celda (onblur)
 function showCalcResult(el){
     const v=el.value;
-    if(!v)return;
+    if(!v){
+        // Input vacío: limpiar cualquier fórmula almacenada para que no vuelva a aparecer
+        if(el.dataset)delete el.dataset.formula;
+        el.removeAttribute('title');
+        return;
+    }
     const result=evalExpr(v);
     // Solo reemplazar si la cadena original era una fórmula (tiene operadores)
     if(/[+\-*/]/.test(v)&&result!==0){
         el.dataset.formula=v; // guardar la fórmula original como tooltip
         el.value=result;
         el.title='F\u00f3rmula: '+v+' = '+result;
+    }else{
+        // Es un número simple o no evaluable: limpiar estado previo de fórmula
+        if(el.dataset)delete el.dataset.formula;
+        el.removeAttribute('title');
     }
 }
 // Al hacer focus, si tenía fórmula, restaurarla para poder editarla
@@ -1842,6 +1851,12 @@ function removeOpcion(btn){
 }
 
 function onCalcInput(el){
+    // Al editar la celda manualmente, limpiar la fórmula almacenada para que
+    // el cálculo use el valor actual y no la fórmula anterior.
+    if(el.dataset&&el.dataset.formula){
+        delete el.dataset.formula;
+        el.removeAttribute('title');
+    }
     const opId=el.dataset.op;
     recalcRow(opId,true);
 }
