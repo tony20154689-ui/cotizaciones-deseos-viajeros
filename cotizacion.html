@@ -1848,7 +1848,6 @@ function recalcRow(opId,autoFill){
         const sub=subSum;
         const bol=firstRowVal;
         const pax=Math.max(1,calc.paxCount[col]||0);
-        const sub=bol+hot+tou+tra;
         const xgrPerPax=calc.paxCount[col]>0?(xgr/pax):0;
         const totalRaw=sub+fee+xgrPerPax;
         // Redondear al siguiente número que termine en 9 (sin decimales)
