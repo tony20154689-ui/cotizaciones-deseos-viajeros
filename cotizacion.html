@@ -1664,7 +1664,10 @@ function buildCalcHtml(opId,calc){
     const dynamicRowsHtml=allRows.map((name,i)=>{
         const fld=allFlds[i];
         const isExtra=i>=4;
-        return`<tr data-calc-fld="${fld}"><td style="display:flex;align-items:center;gap:2px;">${isExtra?'<input type="text" data-op="'+opId+'" data-rowname="'+fld+'" value="'+esc(name)+'" style="width:70px;font-size:0.7rem;font-weight:600;border:1px solid var(--border);border-radius:3px;padding:1px 3px;" oninput="onCalcInput(this)">':'<span>'+esc(name)+'</span>'}${isExtra?'<button class="btn-icon remove" style="width:18px;height:18px;font-size:0.6rem;" onclick="removeCalcRow(this,\\''+opId+'\\')" title="Eliminar fila">&times;</button>':''}</td><td><input data-op="${opId}" data-fld="${fld}" data-col="ad" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="${fld}" data-col="n11" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="${fld}" data-col="n3" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td></tr>`;
+        const nameCell=isExtra
+            ?`<input type="text" data-op="${opId}" data-rowname="${fld}" value="${esc(name)}" style="width:70px;font-size:0.7rem;font-weight:600;border:1px solid var(--border);border-radius:3px;padding:1px 3px;" oninput="onCalcInput(this)"><button class="btn-icon remove" style="width:18px;height:18px;font-size:0.6rem;" onclick="removeCalcRow(this,'${opId}')" title="Eliminar fila">&times;</button>`
+            :`<span>${esc(name)}</span>`;
+        return`<tr data-calc-fld="${fld}"><td style="display:flex;align-items:center;gap:2px;">${nameCell}</td><td><input data-op="${opId}" data-fld="${fld}" data-col="ad" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="${fld}" data-col="n11" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td><td><input data-op="${opId}" data-fld="${fld}" data-col="n3" oninput="onCalcInput(this)" onblur="showCalcResult(this)"></td></tr>`;
     }).join('');
 
     return`<td colspan="5"><div class="calc-container">
