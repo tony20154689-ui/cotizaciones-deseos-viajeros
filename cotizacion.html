@@ -827,7 +827,8 @@ body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);m
 <!-- VIEW: ENCABEZADOS -->
 <div class="app-view view-list" id="viewEncabezados">
     <div class="list-header"><h2>Destinos</h2></div>
-    <p style="margin-bottom:12px;color:var(--text-light);font-size:0.85rem;">Organice im&aacute;genes de encabezado por pa&iacute;s y destino.</p>
+    <p style="margin-bottom:10px;color:var(--text-light);font-size:0.85rem;">Organice im&aacute;genes de encabezado por pa&iacute;s y destino. Las im&aacute;genes se comprimen autom&aacute;ticamente al subirlas.</p>
+    <div id="storageIndicator" style="margin-bottom:14px;"></div>
     <div class="enc-add-pais"><input type="text" id="nuevoPaisInput" placeholder="Nombre del pa&iacute;s..."><button class="btn btn-primary" onclick="agregarPais()">+ Pa&iacute;s</button></div>
     <div id="paisesContainer"></div>
 </div>
@@ -980,7 +981,82 @@ const defaultChecklistItems=['Revisi\u00f3n de pasaporte','Pantallazo de la aero
 function getLS(k){try{return JSON.parse(localStorage.getItem(k)||'[]');}catch(e){return[];}}
 function setLS(k,v){localStorage.setItem(k,JSON.stringify(v));}
 function getLSObj(k){try{return JSON.parse(localStorage.getItem(k)||'{}');}catch(e){return {};}}
-function setLSObj(k,v){localStorage.setItem(k,JSON.stringify(v));}
+function setLSObj(k,v){
+    try{
+        localStorage.setItem(k,JSON.stringify(v));
+        return true;
+    }catch(e){
+        if(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'||(e.code&&(e.code===22||e.code===1014))){
+            const info=getStorageInfo();
+            alert('\u26A0 El almacenamiento del navegador se llen\u00f3.\n\nUso actual: '+info.usedMB+' MB de ~5 MB disponibles.\n\nSugerencias:\n\u2022 Elimin\u00e1 cotizaciones viejas del historial\n\u2022 Elimin\u00e1 adjuntos internos pesados\n\u2022 Elimin\u00e1 destinos que no uses\n\nLas im\u00e1genes nuevas se comprimen autom\u00e1ticamente, pero si el navegador ya est\u00e1 lleno no pueden guardarse.');
+        }else{
+            alert('Error al guardar en localStorage: '+e.message);
+            console.error(e);
+        }
+        return false;
+    }
+}
+
+// Información del uso actual de localStorage
+function getStorageInfo(){
+    let totalBytes=0;
+    const byKey={};
+    for(let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i);
+        const v=localStorage.getItem(k)||'';
+        const bytes=(k.length+v.length)*2; // UTF-16 aprox
+        totalBytes+=bytes;
+        if(k.startsWith('dv_'))byKey[k]=bytes;
+    }
+    return{
+        usedBytes:totalBytes,
+        usedMB:(totalBytes/1024/1024).toFixed(2),
+        byKey,
+        // Estimación del límite (~5MB en la mayoría de navegadores)
+        pct:Math.min(100,Math.round((totalBytes/(5*1024*1024))*100))
+    };
+}
+
+// Comprime una imagen a un máximo de maxW×maxH y calidad JPEG
+// Reduce 10-20× el tamaño de las imágenes típicas de cámara/screenshot
+function compressImage(file,maxW,maxH,quality){
+    maxW=maxW||1200;maxH=maxH||1200;quality=quality||0.82;
+    return new Promise((resolve,reject)=>{
+        if(!file||!file.type||file.type.indexOf('image')!==0){reject(new Error('No es imagen'));return;}
+        const reader=new FileReader();
+        reader.onerror=()=>reject(reader.error);
+        reader.onload=function(ev){
+            const img=new Image();
+            img.onerror=()=>reject(new Error('No se pudo cargar la imagen'));
+            img.onload=function(){
+                let w=img.width,h=img.height;
+                // Mantener proporción, escalar al mayor lado
+                if(w>maxW||h>maxH){
+                    const ratio=Math.min(maxW/w,maxH/h);
+                    w=Math.round(w*ratio);
+                    h=Math.round(h*ratio);
+                }
+                const canvas=document.createElement('canvas');
+                canvas.width=w;canvas.height=h;
+                const ctx=canvas.getContext('2d');
+                // Fondo blanco para PNGs transparentes (JPEG no soporta alpha)
+                ctx.fillStyle='#ffffff';
+                ctx.fillRect(0,0,w,h);
+                ctx.drawImage(img,0,0,w,h);
+                // Usar JPEG para imágenes grandes (mejor compresión), PNG solo si era PNG pequeño
+                const isPng=file.type==='image/png'&&file.size<150*1024;
+                const mime=isPng?'image/png':'image/jpeg';
+                const q=isPng?1:quality;
+                try{
+                    const dataUrl=canvas.toDataURL(mime,q);
+                    resolve(dataUrl);
+                }catch(err){reject(err);}
+            };
+            img.src=ev.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
 const getHistorial=()=>getLS('dv_cotizaciones');
 const saveHistorial=(l)=>setLS('dv_cotizaciones',l);
 const getEncabezados=()=>getLSObj('dv_encabezados');
@@ -2076,11 +2152,47 @@ function addPuerto(fecha,puerto,llegada,salida,actividad){
 }
 
 // ===== LOGO / WATERMARK =====
-function handleLogoUpload(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=function(ev){logoDataUrl=ev.target.result;updatePreview();};r.readAsDataURL(f);}
-function handleWatermarkUpload(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=function(ev){watermarkDataUrl=ev.target.result;document.getElementById('watermarkThumb').src=watermarkDataUrl;document.getElementById('watermarkPreviewThumb').style.display='';updatePreview();};r.readAsDataURL(f);}
+function handleLogoUpload(e){
+    const f=e.target.files[0];if(!f)return;
+    // Logo pequeño (200×200) con alta calidad
+    compressImage(f,300,300,0.9).then(dataUrl=>{
+        logoDataUrl=dataUrl;updatePreview();
+    }).catch(err=>alert('No se pudo procesar la imagen: '+err.message));
+}
+function handleWatermarkUpload(e){
+    const f=e.target.files[0];if(!f)return;
+    // Marca de agua: 600×600 para calidad al mostrarse grande
+    compressImage(f,600,600,0.85).then(dataUrl=>{
+        watermarkDataUrl=dataUrl;
+        document.getElementById('watermarkThumb').src=watermarkDataUrl;
+        document.getElementById('watermarkPreviewThumb').style.display='';
+        updatePreview();
+    }).catch(err=>alert('No se pudo procesar la imagen: '+err.message));
+}
 
 // ===== ADJUNTOS =====
-function handleAdjuntoUpload(e){const files=e.target.files;if(!files.length)return;const cat=document.getElementById('adjuntoCategoria').value;const desc=document.getElementById('adjuntoDescripcion').value;let loaded=0;Array.from(files).forEach((f,i)=>{const r=new FileReader();r.onload=function(ev){adjuntos.push({id:Date.now()+'_'+i,categoria:cat,descripcion:desc||f.name,dataUrl:ev.target.result});loaded++;if(loaded===files.length){renderAdjuntos();updatePreview();document.getElementById('adjuntoDescripcion').value='';e.target.value='';}};r.readAsDataURL(f);});}
+function handleAdjuntoUpload(e){
+    const files=e.target.files;if(!files.length)return;
+    const cat=document.getElementById('adjuntoCategoria').value;
+    const desc=document.getElementById('adjuntoDescripcion').value;
+    let loaded=0;
+    Array.from(files).forEach((f,i)=>{
+        // Comprimir adjuntos a 1200×1200 max con calidad 0.8
+        compressImage(f,1200,1200,0.8).then(dataUrl=>{
+            adjuntos.push({id:Date.now()+'_'+i,categoria:cat,descripcion:desc||f.name,dataUrl});
+            loaded++;
+            if(loaded===files.length){
+                renderAdjuntos();updatePreview();
+                document.getElementById('adjuntoDescripcion').value='';
+                e.target.value='';
+            }
+        }).catch(err=>{
+            loaded++;
+            console.error('Error en adjunto:',err);
+            if(loaded===files.length){renderAdjuntos();updatePreview();}
+        });
+    });
+}
 
 // Pegar imágenes con Ctrl+V desde el portapapeles
 function handleAdjuntoPaste(e){
@@ -2100,19 +2212,17 @@ function handleAdjuntoPaste(e){
             const f=it.getAsFile();
             if(!f)continue;
             found=true;
-            const r=new FileReader();
-            r.onload=function(ev){
+            compressImage(f,1200,1200,0.8).then(dataUrl=>{
                 adjuntos.push({
                     id:Date.now()+'_'+Math.random().toString(36).slice(2,6),
                     categoria:cat,
                     descripcion:desc||('Imagen pegada '+new Date().toLocaleString('es-CR')),
-                    dataUrl:ev.target.result
+                    dataUrl
                 });
                 renderAdjuntos();
                 updatePreview();
                 if(desc)document.getElementById('adjuntoDescripcion').value='';
-            };
-            r.readAsDataURL(f);
+            }).catch(err=>console.error('Error en paste:',err));
         }
     }
     if(found)e.preventDefault();
@@ -2185,9 +2295,47 @@ function agregarPais(){const inp=document.getElementById('nuevoPaisInput');const
 function eliminarPais(p){if(!confirm('\u00bfEliminar "'+p+'" y todos sus destinos?'))return;const enc=getEncabezados();delete enc[p];saveEncabezados(enc);renderEncabezados();populatePaisSelect();}
 function agregarDestino(p){const n=prompt('Nombre del destino:');if(!n||!n.trim())return;const enc=getEncabezados();if(!enc[p])enc[p]={};if(enc[p][n.trim()]){alert('Destino ya existe.');return;}enc[p][n.trim()]=null;saveEncabezados(enc);renderEncabezados();populatePaisSelect();}
 function eliminarDestino(p,d){if(!confirm('\u00bfEliminar "'+d+'"?'))return;const enc=getEncabezados();if(enc[p])delete enc[p][d];saveEncabezados(enc);renderEncabezados();populatePaisSelect();}
-function subirImagenDestino(p,d){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=function(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=function(ev){const enc=getEncabezados();if(!enc[p])enc[p]={};enc[p][d]=ev.target.result;saveEncabezados(enc);renderEncabezados();updatePreview();};r.readAsDataURL(f);};inp.click();}
+function subirImagenDestino(p,d){
+    const inp=document.createElement('input');
+    inp.type='file';inp.accept='image/*';
+    inp.onchange=function(e){
+        const f=e.target.files[0];if(!f)return;
+        // Comprimir a 1600×600 (tamaño ideal para el header de cotización) con alta calidad
+        compressImage(f,1600,600,0.85).then(dataUrl=>{
+            const enc=getEncabezados();
+            if(!enc[p])enc[p]={};
+            enc[p][d]=dataUrl;
+            if(saveEncabezados(enc)){
+                renderEncabezados();
+                updatePreview();
+            }
+        }).catch(err=>{
+            alert('No se pudo procesar la imagen: '+err.message);
+            console.error(err);
+        });
+    };
+    inp.click();
+}
 function getDestinoImage(p,d){const enc=getEncabezados();return(enc[p]&&enc[p][d])||null;}
-function renderEncabezados(){const enc=getEncabezados();const c=document.getElementById('paisesContainer');const paises=Object.keys(enc);if(!paises.length){c.innerHTML='<div class="grid-empty"><h3>Sin pa\u00edses</h3><p>Agregue un pa\u00eds arriba para comenzar.</p></div>';return;}c.innerHTML=paises.map(p=>{const ds=Object.keys(enc[p]);return`<div class="enc-pais-section"><div class="enc-pais-header" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'"><h3>${esc(p)} (${ds.length})</h3><button class="btn btn-sm btn-danger" onclick="event.stopPropagation();eliminarPais('${esc(p).replace(/'/g,"\\'")}')">Eliminar</button></div><div class="enc-pais-body"><div class="enc-destinos-grid">${ds.map(d=>{const img=enc[p][d];return`<div class="enc-destino-card"><div class="enc-img-preview">${img?`<img src="${img}">`:'Sin imagen'}</div><div class="enc-destino-info"><div class="enc-destino-name">${esc(d)}</div><div class="enc-destino-actions"><button class="btn btn-sm btn-primary" onclick="subirImagenDestino('${esc(p).replace(/'/g,"\\'")}','${esc(d).replace(/'/g,"\\'")}');">${img?'Cambiar':'Subir'}</button><button class="btn btn-sm btn-danger" onclick="eliminarDestino('${esc(p).replace(/'/g,"\\'")}','${esc(d).replace(/'/g,"\\'")}');">&times;</button></div></div></div>`;}).join('')}<div class="enc-add-destino" onclick="agregarDestino('${esc(p).replace(/'/g,"\\'")}')"><span class="plus">+</span><span style="font-size:0.78rem;">Destino</span></div></div></div></div>`;}).join('');}
+function renderStorageIndicator(targetId){
+    const t=document.getElementById(targetId||'storageIndicator');
+    if(!t)return;
+    const info=getStorageInfo();
+    const pct=info.pct;
+    const color=pct>85?'var(--danger)':(pct>65?'#d4830f':'var(--success)');
+    const msg=pct>85?'\u26A0 Almacenamiento casi lleno':(pct>65?'\u2139 Almacenamiento alto':'\u2713 Almacenamiento con espacio');
+    t.innerHTML=`<div style="background:var(--bg);border-radius:8px;padding:10px 14px;border-left:4px solid ${color};">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div style="font-weight:600;font-size:0.82rem;color:${color};">${msg}</div>
+            <div style="font-size:0.78rem;color:var(--text-light);">${info.usedMB} MB / ~5 MB</div>
+        </div>
+        <div style="height:8px;background:rgba(0,0,0,0.08);border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:${color};transition:width 0.3s;"></div>
+        </div>
+    </div>`;
+}
+
+function renderEncabezados(){renderStorageIndicator('storageIndicator');const enc=getEncabezados();const c=document.getElementById('paisesContainer');const paises=Object.keys(enc);if(!paises.length){c.innerHTML='<div class="grid-empty"><h3>Sin pa\u00edses</h3><p>Agregue un pa\u00eds arriba para comenzar.</p></div>';return;}c.innerHTML=paises.map(p=>{const ds=Object.keys(enc[p]);return`<div class="enc-pais-section"><div class="enc-pais-header" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'"><h3>${esc(p)} (${ds.length})</h3><button class="btn btn-sm btn-danger" onclick="event.stopPropagation();eliminarPais('${esc(p).replace(/'/g,"\\'")}')">Eliminar</button></div><div class="enc-pais-body"><div class="enc-destinos-grid">${ds.map(d=>{const img=enc[p][d];return`<div class="enc-destino-card"><div class="enc-img-preview">${img?`<img src="${img}">`:'Sin imagen'}</div><div class="enc-destino-info"><div class="enc-destino-name">${esc(d)}</div><div class="enc-destino-actions"><button class="btn btn-sm btn-primary" onclick="subirImagenDestino('${esc(p).replace(/'/g,"\\'")}','${esc(d).replace(/'/g,"\\'")}');">${img?'Cambiar':'Subir'}</button><button class="btn btn-sm btn-danger" onclick="eliminarDestino('${esc(p).replace(/'/g,"\\'")}','${esc(d).replace(/'/g,"\\'")}');">&times;</button></div></div></div>`;}).join('')}<div class="enc-add-destino" onclick="agregarDestino('${esc(p).replace(/'/g,"\\'")}')"><span class="plus">+</span><span style="font-size:0.78rem;">Destino</span></div></div></div></div>`;}).join('');}
 function populatePaisSelect(){const enc=getEncabezados();const sel=document.getElementById('paisSelect');const cur=sel.value;sel.innerHTML='<option value="">-- Pa\u00eds --</option>';Object.keys(enc).forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o);});if(cur&&enc[cur])sel.value=cur;onPaisChange();}
 function onPaisChange(){const p=document.getElementById('paisSelect').value;const enc=getEncabezados();const ds=document.getElementById('destinoSelect');const di=document.getElementById('destino');ds.innerHTML='<option value="">-- Destino --</option>';if(p&&enc[p])Object.keys(enc[p]).forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;ds.appendChild(o);});const co=document.createElement('option');co.value='__custom';co.textContent='Escribir manualmente...';ds.appendChild(co);ds.style.display='';di.style.display='none';onDestinoSelect();}
 function onDestinoSelect(){const ds=document.getElementById('destinoSelect');const di=document.getElementById('destino');const pv=document.getElementById('destinoPreviewImg');const pi=document.getElementById('destinoPreviewImgTag');const p=document.getElementById('paisSelect').value;if(ds.value==='__custom'){di.style.display='';ds.style.display='none';di.focus();selectedHeaderImg=null;pv.classList.remove('visible');}else if(ds.value){di.value=ds.value;di.style.display='none';const img=getDestinoImage(p,ds.value);selectedHeaderImg=img;if(img){pi.src=img;pv.classList.add('visible');}else{pv.classList.remove('visible');}}else{di.style.display='none';selectedHeaderImg=null;pv.classList.remove('visible');}updatePreview();}
