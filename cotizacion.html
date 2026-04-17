@@ -1888,6 +1888,16 @@ document.addEventListener('focusin',function(e){
         e.target.title='';
     }
 });
+// Presionar Enter en cualquier celda del calc → evalúa la fórmula (sale del campo)
+document.addEventListener('keydown',function(e){
+    if(e.key!=='Enter')return;
+    const t=e.target;
+    if(!t||t.tagName!=='INPUT')return;
+    // Solo aplica a inputs de la calculadora (tienen data-fld, data-rowname o data-pax)
+    if(!t.dataset||(!t.dataset.fld&&!t.dataset.rowname&&!t.dataset.pax))return;
+    e.preventDefault();
+    t.blur(); // dispara showCalcResult() que evalúa y muestra el resultado
+});
 
 function populateCalcInputs(opId,calc){
     const v=calc.values||{};
